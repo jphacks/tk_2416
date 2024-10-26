@@ -6,11 +6,11 @@ type Props = {
     text: string; 
 }
 
-export const Header2: React.FC<Props> = ({text}) => {
+export const Header3: React.FC<Props> = ({text}) => {
     return (
       <Box sx={{ width: '100%', maxWidth: 500 }}>
     
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h6" gutterBottom>
           {text}
         </Typography>
        
