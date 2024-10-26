@@ -2,6 +2,7 @@ const express = require('express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const app = express();
+const sqlite3 = require('sqlite3')
 const port = 3000;
 
 const swaggerOptions = {
@@ -18,6 +19,9 @@ const swaggerOptions = {
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
+
+const db = new sqlite3.Database("stamina.db")
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 /**
@@ -49,7 +53,16 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *         description: Database error.
  */
 app.get('/calculateBaseStaminaByUserInput', (req, res) => {
-    
+    const testQuery = "SELECT * FROM BaseStamina";
+    const response = "aaa"
+    db.run(testQuery, (err) => {
+        if(err){
+            console.error(err.message);
+        }else{
+            console.log("成功")
+        }
+        res.json({response});
+    })
 });
 
 /**
