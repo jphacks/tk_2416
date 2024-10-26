@@ -315,27 +315,35 @@ app.post("/recoverStaminaByRest", (req, res) => {});
  * @swagger
  * /joinGroup:
  *   post:
- *     summary: Create a group with given user IDs.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               groupName:
- *                 type: string
- *               userIds:
- *                 type: array
- *                 items:
- *                   type: string
+ *     summary: ユーザIDとグループIDのペアをUserGroupsテーブルに格納する
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: query
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: Group created successfully.
  *       500:
  *         description: Database error.
  */
-app.post("/joinGroup", (req, res) => {});
+app.post("/joinGroup", (req, res) => {
+    const userId = req.query.userId;
+    const groupId = req.query.groupId;
+    const userGroupsQuery = "UPDATE UserGroups SET groupid = ? WHERE userId = ?";
+    db.run(userGroupsQuery, [groupId, userId], (err) => {
+        if (err) {
+            return res.status(500).send('Error updating the group ID');
+        }
+        res.send({ userid: userId, groupid: groupId });
+    });
+});
 
 /**
  * @swagger
