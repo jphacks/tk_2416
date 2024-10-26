@@ -27,11 +27,37 @@ const db = new sqlite3.Database("stamina.db");
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+
+/**
+ * @swagger
+ * /setUserName:
+ *   post:
+ *     summary: 名前とユーザIDのペアをUserNamesテーブルに格納する。
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               userName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User name set successfully.
+ *       500:
+ *         description: Database error.
+ */
+app.post("/setUserName", (req, res) => {});
+
+
 /**
  * @swagger
  * /calculateBaseStaminaByUserInput:
  *   get:
- *     summary: Calculate base stamina based on user input.
+ *     summary: ユーザのスタミナレベルに基づいて基本スタミナを設定し、BaseStaminaテーブルを更新する。
  *     parameters:
  *       - in: query
  *         name: userId
@@ -39,16 +65,10 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *           type: string
  *         required: true
  *       - in: query
- *         name: age
+ *         name: staminaLevel
  *         schema:
  *           type: integer
  *         required: true
- *       - in: query
- *         name: activityLevel
- *         schema:
- *           type: string
- *         required: true
- *         description: User activity level (e.g., high, medium, low)
  *     responses:
  *       200:
  *         description: Base stamina calculated successfully.
@@ -56,17 +76,36 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *         description: Database error.
  */
 
-app.get("/calculateBaseStaminaByUserInput", (req, res) => {
-	const testQuery = "SELECT * FROM BaseStamina";
-	const response = "aaa";
-	db.run(testQuery, (err) => {
-		if (err) {
-			console.error(err.message);
-		} else {
-			console.log("成功");
-		}
-		res.json({ response });
-	});
+app.get('/calculateBaseStaminaByUserInput', (req, res) => {
+    //req.data：userid:userid, stamina_level(integer): 1-5
+    const userId = req.query.userId;
+    const staminaLevel = parseInt(req.query.staminaLevel);
+    let baseStamina;
+    switch (staminaLevel) {
+        case 1:
+            baseStamina = 1800;
+            break;
+        case 2:
+            baseStamina = 3600;
+            break;
+        case 3:
+            baseStamina = 5400;
+            break;
+        case 4:
+            baseStamina = 7200;
+            break;
+        case 5:
+            baseStamina = 9000;
+            break;
+        default:
+            baseStamina = 5400;
+            break;
+    }
+    settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
+    db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json({userId, baseStamina})
+        });
 });
 
 /**
@@ -249,29 +288,6 @@ app.post("/createGroup", (req, res) => {});
  */
 app.get("/generateRandomGroupId", (req, res) => {});
 
-/**
- * @swagger
- * /setUserName:
- *   post:
- *     summary: Set the user's name.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *               userName:
- *                 type: string
- *     responses:
- *       200:
- *         description: User name set successfully.
- *       500:
- *         description: Database error.
- */
-app.post("/setUserName", (req, res) => {});
 
 /**
  * @swagger
