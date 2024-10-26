@@ -29,19 +29,24 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // function
 const generateRandomID = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters[randomIndex];
-    }
-    return result;
+	const characters =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	let result = "";
+	for (let i = 0; i < 8; i++) {
+		const randomIndex = Math.floor(Math.random() * characters.length);
+		result += characters[randomIndex];
+	}
+	return result;
 };
 
 const isIDUnique = (userid, callback) => {
-    db.get('SELECT userid FROM UserNames WHERE userid = ?', [userid], (err, row) => {
-        callback(!row); 
-    });
+	db.get(
+		"SELECT userid FROM UserNames WHERE userid = ?",
+		[userid],
+		(err, row) => {
+			callback(!row);
+		}
+	);
 };
 
 /**
@@ -62,46 +67,71 @@ const isIDUnique = (userid, callback) => {
  *         description: Database error.
  */
 app.post("/setUserName", (req, res) => {
-    const userName = req.query.userName;
-    const newID = generateRandomID();
+	const userName = req.query.userName;
+	const newID = generateRandomID();
 
-    isIDUnique(newID, (unique) => {
-        if (unique) {
-            const insertUserIdIntoUserNamesQuery = "INSERT INTO UserNames (userid, name) VALUES (?, ?)";
-            db.run(insertUserIdIntoUserNamesQuery, [newID, userName], (err) => {
-                if (err) {
-                    return res.status(500).send('Error saving the user ID');
-                }
-                const insertUserIdIntoBaseStaminaQuery = "INSERT INTO BaseStamina (userid, base_stamina, mentions) VALUES (?, ?, ?)";
-                db.run(insertUserIdIntoBaseStaminaQuery, 
-                    [newID, null, null], (err) => {
-                        if (err) {
-                            return res.status(500).send('Error saving to BaseStamina table');
-                        }
-                        const insertUserIdIntoCurrentStaminaQuery = "INSERT INTO CurrentStamina (userid, current_stamina) VALUES (?, ?)";
-                        db.run(insertUserIdIntoCurrentStaminaQuery, 
-                            [newID, null], (err) => {
-                                if (err) {
-                                    return res.status(500).send('Error saving to CurrentStamina table');
-                                }
-                                const insertUserIdIntoUserGroupsQuery = "INSERT INTO UserGroups (userid, groupid) VALUES (?, ?)";
-                                db.run(insertUserIdIntoUserGroupsQuery, 
-                                    [newID, null], (err) => {
-                                        if (err) {
-                                            return res.status(500).send('Error saving to userGroups table');
-                                        }
-                                        res.send({ userid: newID, user_name: userName });
-                                    });
-                            });
-                    });
-            });
-        } else {
-            res.redirect('/generate-username'); 
-            return;
-        }
-    });
+	isIDUnique(newID, (unique) => {
+		if (unique) {
+			const insertUserIdIntoUserNamesQuery =
+				"INSERT INTO UserNames (userid, name) VALUES (?, ?)";
+			db.run(insertUserIdIntoUserNamesQuery, [newID, userName], (err) => {
+				if (err) {
+					return res.status(500).send("Error saving the user ID");
+				}
+				const insertUserIdIntoBaseStaminaQuery =
+					"INSERT INTO BaseStamina (userid, base_stamina, mentions) VALUES (?, ?, ?)";
+				db.run(
+					insertUserIdIntoBaseStaminaQuery,
+					[newID, null, null],
+					(err) => {
+						if (err) {
+							return res
+								.status(500)
+								.send("Error saving to BaseStamina table");
+						}
+						const insertUserIdIntoCurrentStaminaQuery =
+							"INSERT INTO CurrentStamina (userid, current_stamina) VALUES (?, ?)";
+						db.run(
+							insertUserIdIntoCurrentStaminaQuery,
+							[newID, null],
+							(err) => {
+								if (err) {
+									return res
+										.status(500)
+										.send(
+											"Error saving to CurrentStamina table"
+										);
+								}
+								const insertUserIdIntoUserGroupsQuery =
+									"INSERT INTO UserGroups (userid, groupid) VALUES (?, ?)";
+								db.run(
+									insertUserIdIntoUserGroupsQuery,
+									[newID, null],
+									(err) => {
+										if (err) {
+											return res
+												.status(500)
+												.send(
+													"Error saving to userGroups table"
+												);
+										}
+										res.send({
+											userid: newID,
+											user_name: userName,
+										});
+									}
+								);
+							}
+						);
+					}
+				);
+			});
+		} else {
+			res.redirect("/generate-username");
+			return;
+		}
+	});
 });
-
 
 /**
  * @swagger
@@ -126,42 +156,42 @@ app.post("/setUserName", (req, res) => {
  *         description: Database error.
  */
 
-app.post('/calculateBaseStaminaByUserInput', (req, res) => {
-    //req.body userid:userid, stamina_level(integer): 1-5
-    const userId = req.body.userId;
-    const staminaLevel = parseInt(req.body.staminaLevel);
-    let baseStamina;
-    switch (staminaLevel) {
-        case 1:
-            baseStamina = 1800;
-            break;
-        case 2:
-            baseStamina = 3600;
-            break;
-        case 3:
-            baseStamina = 5400;
-            break;
-        case 4:
-            baseStamina = 7200;
-            break;
-        case 5:
-            baseStamina = 9000;
-            break;
-        default:
-            baseStamina = 5400;
-            break;
-    }
-    settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
-    db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json({userId, baseStamina})
-        });
+app.post("/calculateBaseStaminaByUserInput", (req, res) => {
+	//req.body userid:userid, stamina_level(integer): 1-5
+	const userId = req.body.userId;
+	const staminaLevel = parseInt(req.body.staminaLevel);
+	let baseStamina;
+	switch (staminaLevel) {
+		case 1:
+			baseStamina = 1800;
+			break;
+		case 2:
+			baseStamina = 3600;
+			break;
+		case 3:
+			baseStamina = 5400;
+			break;
+		case 4:
+			baseStamina = 7200;
+			break;
+		case 5:
+			baseStamina = 9000;
+			break;
+		default:
+			baseStamina = 5400;
+			break;
+	}
+	settingBaseStaminaQuery =
+		"UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
+	db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
+		if (err) return res.status(500).json({ error: "Database error" });
+		res.json({ userId, baseStamina });
+	});
 });
 
 /**
  * @swagger
  * /calculateInitialStaminaByCondition:
- *   post:
  *   post:
  *     summary: Calculate initial stamina for today based on condition.
  *     parameters:
@@ -173,9 +203,9 @@ app.post('/calculateBaseStaminaByUserInput', (req, res) => {
  *       - in: body
  *         name: condition
  *         schema:
- *           type: string
+ *           type: integer
  *         required: true
- *         description: Today's condition (e.g., good, average, bad)
+ *         description: Today's condition
  *     responses:
  *       200:
  *         description: Initial stamina calculated successfully.
@@ -339,32 +369,57 @@ app.post("/createGroup", (req, res) => {});
  */
 app.post("/generateRandomGroupId", (req, res) => {});
 
-
 /**
  * @swagger
  * /storeMentionsInfo:
  *   post:
- *     summary: Store mentions information for a user.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *               mentions:
- *                 type: array
- *                 items:
- *                   type: string
+ *     summary: Accepts a user ID and a mentions string, then updates the mentions information in the BaseStamina table for the specified user.
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: query
+ *         name: mentions
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: Mentions information stored successfully.
+ *       400:
+ *         description: Missing userId or mentions in request.
  *       500:
- *         description: Database error.
+ *         description: Database error while updating mentions.
  */
-app.post("/storeMentionsInfo", (req, res) => {});
+
+app.post("/storeMentionsInfo", (req, res) => {
+	const { userId, mentions } = req.query;
+
+	console.log("userId:", userId);
+	console.log("mentions:", mentions);
+
+	if (!userId || !mentions) {
+		return res.status(400).json({ error: "Missing userId or mentions" });
+	}
+
+	const updateMentionsQuery = `UPDATE BaseStamina SET mentions = ? WHERE userid = ?`;
+
+	db.run(updateMentionsQuery, [mentions, userId], (err) => {
+		if (err) {
+			return res
+				.status(500)
+				.json({ error: "Database error updating mentions" });
+		}
+
+		res.json({
+			message: "Mentions information stored successfully",
+			userId,
+			mentions,
+		});
+	});
+});
 
 app.post("/", (req, res) => {
 	res.send("Hello, World!");
