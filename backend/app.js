@@ -27,27 +27,28 @@ const db = new sqlite3.Database("stamina.db");
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// function
-const generateRandomID = () => {
-	const characters =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	let result = "";
-	for (let i = 0; i < 8; i++) {
-		const randomIndex = Math.floor(Math.random() * characters.length);
-		result += characters[randomIndex];
-	}
-	return result;
+const generateRandomGroupID = () => {
+    return Math.floor(1000 + Math.random() * 9000);
 };
 
-const isIDUnique = (userid, callback) => {
-	db.get(
-		"SELECT userid FROM UserNames WHERE userid = ?",
-		[userid],
-		(err, row) => {
-			callback(!row);
-		}
-	);
+const isGroupIDUnique = (groupid, callback) => {
+    db.get('SELECT groupid FROM Groups WHERE groupid = ?', [groupid], (err, row) => {
+        callback(!row);
+    });
 };
+
+function generateDummyData(userid) {
+    const dummyData = [];
+
+    for (let i = 0; i < 20; i++) {
+        dummyData.push({
+            userid: userid,
+            num: i+1,
+            steps: Math.floor(Math.random() * 2000)
+        });
+    }
+    return dummyData;
+}
 
 /**
  * @swagger
@@ -67,8 +68,8 @@ const isIDUnique = (userid, callback) => {
  *         description: Database error.
  */
 app.post("/setUserName", (req, res) => {
-	const userName = req.query.userName;
-	const newID = generateRandomID();
+  const userName = req.query.userName;
+  const newID = generateRandomUserID();
 
 	isIDUnique(newID, (unique) => {
 		if (unique) {
@@ -193,7 +194,7 @@ app.post("/calculateBaseStaminaByUserInput", (req, res) => {
  * @swagger
  * /calculateInitialStaminaByCondition:
  *   post:
- *     summary: Calculate initial stamina for today based on condition.
+ *     summary: ユーザの今日のコンディションに基づいてCurrentStaminaテーブルを更新する。
  *     parameters:
  *       - in: body
  *         name: userId
@@ -241,8 +242,8 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
 
 		const calculatedStamina = Math.round(baseStamina * multiplier);
 
-		const updateStaminaQuery = `UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?`;
-		db.run(updateStaminaQuery, [calculatedStamina, userId], (err) => {
+		const updateStaminaQuery = `UPDATE CurrentStamina SET current_stamina = ?, todays_stamina = ? WHERE userid = ?`;
+		db.run(updateStaminaQuery, [calculatedStamina, calculatedStamina, userId], (err) => {
 			if (err)
 				return res
 					.status(500)
@@ -259,9 +260,9 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
 
 /**
  * @swagger
- * /reduceStaminaByTime:
+ * /reduceStamina:
  *   post:
- *     summary: Reduce stamina based on time.
+ *     summary: 10分に1回呼び出され、時間や歩数に応じてスタミナを減らす。
  *     requestBody:
  *       required: true
  *       content:
@@ -284,9 +285,9 @@ app.post("/reduceStaminaByTime", (req, res) => {});
 
 /**
  * @swagger
- * /reduceStaminaBySteps:
+ * /createdummy:
  *   post:
- *     summary: Reduce stamina based on steps.
+ *     summary: createdummy
  *     requestBody:
  *       required: true
  *       content:
@@ -305,7 +306,9 @@ app.post("/reduceStaminaByTime", (req, res) => {});
  *       404:
  *         description: User not found or stamina not initialized.
  */
-app.post("/reduceStaminaBySteps", (req, res) => {});
+app.post("/createdummy", (req, res) => {
+
+});
 
 /**
  * @swagger
@@ -334,40 +337,82 @@ app.post("/recoverStaminaByRest", (req, res) => {});
 
 /**
  * @swagger
- * /createGroup:
+ * /joinGroup:
  *   post:
- *     summary: Create a group with given user IDs.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               groupName:
- *                 type: string
- *               userIds:
- *                 type: array
- *                 items:
- *                   type: string
+ *     summary: ユーザIDとグループIDのペアをUserGroupsテーブルに格納する
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: query
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: Group created successfully.
  *       500:
  *         description: Database error.
  */
-app.post("/createGroup", (req, res) => {});
+app.post("/joinGroup", (req, res) => {
+    const userId = req.query.userId;
+    const groupId = req.query.groupId;
+    const userGroupsQuery = "UPDATE UserGroups SET groupid = ? WHERE userId = ?";
+    db.run(userGroupsQuery, [groupId, userId], (err) => {
+        if (err) {
+            return res.status(500).send('Error updating the group ID');
+        }
+        res.send({ userid: userId, groupid: groupId });
+    });
+});
 
 /**
  * @swagger
  * /generateRandomGroupId:
  *   post:
- *     summary: Generate a random group ID.
+ *     summary: グループ名とグループIDのペアをGroupsテーブルに格納する。
+ *     parameters:
+ *       - in: query
+ *         name: groupName
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
- *         description: Random group ID generated successfully.
+ *         description: User name set successfully.
+ *       500:
+ *         description: Database error.
  */
-app.post("/generateRandomGroupId", (req, res) => {});
+app.post("/generateRandomGroupId", (req, res) => {
+    const userId = req.query.userId;
+    const groupName = req.query.groupName;
+    const newID = generateRandomGroupID();
+    isGroupIDUnique(newID, (unique) => {
+        if (unique) {
+            db.run("INSERT INTO Groups (groupid, group_name) VALUES (?, ?)", [newID, groupName], (err) => {
+                if (err) {
+                    return res.status(500).send('Error saving the group ID');
+                }
+                db.run("UPDATE UserGroups SET groupid = ? WHERE userid = ?", [newID, userId], (err) => {
+                    if (err) {
+                        return res.status(500).send('Error saving the group ID');
+                    }
+                    res.send({ userid: userId, group_name:groupName, groupid: newID });
+                });
+            });
+        } else {
+            res.redirect('/generate-groupid');
+        }
+    });
+});
 
 /**
  * @swagger
@@ -421,8 +466,54 @@ app.post("/storeMentionsInfo", (req, res) => {
 	});
 });
 
-app.post("/", (req, res) => {
-	res.send("Hello, World!");
+/**
+ * @swagger
+ * /generateDummy/:
+ *   post:
+ *     summary: ユーザIDごとに20個のダミーデータを作成する。
+ *     parameters:
+ *       - in: query
+ *         name: userid
+ *         required: true
+ *         description: The ID of the user for whom to generate dummy data.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Dummy data generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       userid:
+ *                         type: string
+ *                       num:
+ *                         type: integer
+ *                       steps:
+ *                         type: integer
+ */
+app.post('/generateDummy', (req, res) => {
+    const userid = req.query.userid; // Get userid from query parameters
+    const dummyData = generateDummyData(userid); // Generate dummy data
+
+    // Insert dummy data into the database
+    dummyData.forEach(data => {
+        db.run(`INSERT INTO Dummy (userid, num, steps) VALUES (?, ?, ?)`, [data.userid, data.num, data.steps], function(err) {
+            if (err) {
+                console.error(err.message);
+            }
+        });
+    });
+
+    res.json({ message: 'Dummy data generated successfully', data: dummyData });
 });
 
 app.listen(port, () => {
