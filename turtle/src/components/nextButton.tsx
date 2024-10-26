@@ -9,7 +9,14 @@ type Props = {
 export const NextButton : React.FC<Props> = ({url}) =>{
   return (
    
-      <Button variant="contained" href={url}>
+      <Button variant="contained" href={url}  
+      sx={{
+        backgroundColor: '#2e7d32',
+        borderRadius: 32,
+        height: 48,
+        fontSize: 16,
+        '&:hover': { backgroundColor: '#27632a' },
+      }}>
         →
       </Button>
   
