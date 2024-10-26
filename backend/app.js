@@ -28,7 +28,7 @@ const db = new sqlite3.Database("stamina.db");
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // function
-const generateRandomID = () => {
+const generateRandomUserID = () => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for (let i = 0; i < 8; i++) {
@@ -38,9 +38,19 @@ const generateRandomID = () => {
     return result;
 };
 
-const isIDUnique = (userid, callback) => {
+const isUserIDUnique = (userid, callback) => {
     db.get('SELECT userid FROM UserNames WHERE userid = ?', [userid], (err, row) => {
         callback(!row); 
+    });
+};
+
+const generateRandomGroupID = () => {
+    return Math.floor(1000 + Math.random() * 9000); // 1000から9999の範囲で4桁の数字を生成
+};
+
+const isGroupIDUnique = (groupid, callback) => {
+    db.get('SELECT groupid FROM Groups WHERE groupid = ?', [groupid], (err, row) => {
+        callback(!row); // groupidが存在しない場合はtrueを返す
     });
 };
 
@@ -63,9 +73,9 @@ const isIDUnique = (userid, callback) => {
  */
 app.post("/setUserName", (req, res) => {
     const userName = req.query.userName;
-    const newID = generateRandomID();
+    const newID = generateRandomUserID();
 
-    isIDUnique(newID, (unique) => {
+    isUserIDUnique(newID, (unique) => {
         if (unique) {
             const insertUserIdIntoUserNamesQuery = "INSERT INTO UserNames (userid, name) VALUES (?, ?)";
             db.run(insertUserIdIntoUserNamesQuery, [newID, userName], (err) => {
@@ -161,7 +171,6 @@ app.post('/calculateBaseStaminaByUserInput', (req, res) => {
 /**
  * @swagger
  * /calculateInitialStaminaByCondition:
- *   post:
  *   post:
  *     summary: Calculate initial stamina for today based on condition.
  *     parameters:
@@ -304,7 +313,7 @@ app.post("/recoverStaminaByRest", (req, res) => {});
 
 /**
  * @swagger
- * /createGroup:
+ * /joinGroup:
  *   post:
  *     summary: Create a group with given user IDs.
  *     requestBody:
@@ -326,18 +335,52 @@ app.post("/recoverStaminaByRest", (req, res) => {});
  *       500:
  *         description: Database error.
  */
-app.post("/createGroup", (req, res) => {});
+app.post("/joinGroup", (req, res) => {});
 
 /**
  * @swagger
  * /generateRandomGroupId:
  *   post:
- *     summary: Generate a random group ID.
+ *     summary: グループ名とグループIDのペアをGroupsテーブルに格納する。
+ *     parameters:
+ *       - in: query
+ *         name: groupName
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
- *         description: Random group ID generated successfully.
+ *         description: User name set successfully.
+ *       500:
+ *         description: Database error.
  */
-app.post("/generateRandomGroupId", (req, res) => {});
+app.post("/generateRandomGroupId", (req, res) => {
+    const userId = req.query.userId;
+    const groupName = req.query.groupName;
+    const newID = generateRandomGroupID();
+    isGroupIDUnique(newID, (unique) => {
+        if (unique) {
+            db.run("INSERT INTO Groups (groupid, group_name) VALUES (?, ?)", [newID, groupName], (err) => {
+                if (err) {
+                    return res.status(500).send('Error saving the group ID');
+                }
+                db.run("UPDATE UserGroups SET groupid = ? WHERE userid = ?", [newID, userId], (err) => {
+                    if (err) {
+                        return res.status(500).send('Error saving the group ID');
+                    }
+                    res.send({ userid: userId, group_name:groupName, groupid: newID });
+                });
+            });
+        } else {
+            res.redirect('/generate-groupid');
+        }
+    });
+});
 
 
 /**
