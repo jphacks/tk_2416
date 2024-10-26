@@ -45,14 +45,27 @@ const isUserIDUnique = (userid, callback) => {
 };
 
 const generateRandomGroupID = () => {
-    return Math.floor(1000 + Math.random() * 9000); // 1000から9999の範囲で4桁の数字を生成
+    return Math.floor(1000 + Math.random() * 9000);
 };
 
 const isGroupIDUnique = (groupid, callback) => {
     db.get('SELECT groupid FROM Groups WHERE groupid = ?', [groupid], (err, row) => {
-        callback(!row); // groupidが存在しない場合はtrueを返す
+        callback(!row);
     });
 };
+
+function generateDummyData(userid) {
+    const dummyData = [];
+
+    for (let i = 0; i < 20; i++) {
+        dummyData.push({
+            userid: userid,
+            num: i+1,
+            steps: Math.floor(Math.random() * 2000)
+        });
+    }
+    return dummyData;
+}
 
 /**
  * @swagger
@@ -88,9 +101,9 @@ app.post("/setUserName", (req, res) => {
                         if (err) {
                             return res.status(500).send('Error saving to BaseStamina table');
                         }
-                        const insertUserIdIntoCurrentStaminaQuery = "INSERT INTO CurrentStamina (userid, current_stamina) VALUES (?, ?)";
+                        const insertUserIdIntoCurrentStaminaQuery = "INSERT INTO CurrentStamina (userid, todays_stamina, current_stamina) VALUES (?, ?)";
                         db.run(insertUserIdIntoCurrentStaminaQuery, 
-                            [newID, null], (err) => {
+                            [newID, null, null], (err) => {
                                 if (err) {
                                     return res.status(500).send('Error saving to CurrentStamina table');
                                 }
@@ -172,7 +185,7 @@ app.post('/calculateBaseStaminaByUserInput', (req, res) => {
  * @swagger
  * /calculateInitialStaminaByCondition:
  *   post:
- *     summary: Calculate initial stamina for today based on condition.
+ *     summary: ユーザの今日のコンディションに基づいてCurrentStaminaテーブルを更新する。
  *     parameters:
  *       - in: body
  *         name: userId
@@ -220,8 +233,8 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
 
 		const calculatedStamina = Math.round(baseStamina * multiplier);
 
-		const updateStaminaQuery = `UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?`;
-		db.run(updateStaminaQuery, [calculatedStamina, userId], (err) => {
+		const updateStaminaQuery = `UPDATE CurrentStamina SET current_stamina = ?, todays_stamina = ? WHERE userid = ?`;
+		db.run(updateStaminaQuery, [calculatedStamina, calculatedStamina, userId], (err) => {
 			if (err)
 				return res
 					.status(500)
@@ -238,9 +251,9 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
 
 /**
  * @swagger
- * /reduceStaminaByTime:
+ * /reduceStamina:
  *   post:
- *     summary: Reduce stamina based on time.
+ *     summary: 10分に1回呼び出され、時間や歩数に応じてスタミナを減らす。
  *     requestBody:
  *       required: true
  *       content:
@@ -263,9 +276,9 @@ app.post("/reduceStaminaByTime", (req, res) => {});
 
 /**
  * @swagger
- * /reduceStaminaBySteps:
+ * /createdummy:
  *   post:
- *     summary: Reduce stamina based on steps.
+ *     summary: createdummy
  *     requestBody:
  *       required: true
  *       content:
@@ -284,7 +297,9 @@ app.post("/reduceStaminaByTime", (req, res) => {});
  *       404:
  *         description: User not found or stamina not initialized.
  */
-app.post("/reduceStaminaBySteps", (req, res) => {});
+app.post("/createdummy", (req, res) => {
+
+});
 
 /**
  * @swagger
@@ -417,8 +432,54 @@ app.post("/generateRandomGroupId", (req, res) => {
  */
 app.post("/storeMentionsInfo", (req, res) => {});
 
-app.post("/", (req, res) => {
-	res.send("Hello, World!");
+/**
+ * @swagger
+ * /generateDummy/:
+ *   post:
+ *     summary: ユーザIDごとに20個のダミーデータを作成する。
+ *     parameters:
+ *       - in: query
+ *         name: userid
+ *         required: true
+ *         description: The ID of the user for whom to generate dummy data.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Dummy data generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       userid:
+ *                         type: string
+ *                       num:
+ *                         type: integer
+ *                       steps:
+ *                         type: integer
+ */
+app.post('/generateDummy', (req, res) => {
+    const userid = req.query.userid; // Get userid from query parameters
+    const dummyData = generateDummyData(userid); // Generate dummy data
+
+    // Insert dummy data into the database
+    dummyData.forEach(data => {
+        db.run(`INSERT INTO Dummy (userid, num, steps) VALUES (?, ?, ?)`, [data.userid, data.num, data.steps], function(err) {
+            if (err) {
+                console.error(err.message);
+            }
+        });
+    });
+
+    res.json({ message: 'Dummy data generated successfully', data: dummyData });
 });
 
 app.listen(port, () => {
