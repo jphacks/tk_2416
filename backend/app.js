@@ -26,44 +26,94 @@ const db = new sqlite3.Database("stamina.db")
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// function
+const generateRandomID = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters[randomIndex];
+    }
+    return result;
+};
+
+const isIDUnique = (userid, callback) => {
+    db.get('SELECT userid FROM UserNames WHERE userid = ?', [userid], (err, row) => {
+        callback(!row); 
+    });
+};
 
 /**
  * @swagger
  * /setUserName:
  *   post:
  *     summary: 名前とユーザIDのペアをUserNamesテーブルに格納する。
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *               userName:
- *                 type: string
+ *     parameters:
+ *       - in: query
+ *         name: userName
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: User name set successfully.
  *       500:
  *         description: Database error.
  */
-app.post("/setUserName", (req, res) => {});
+app.post("/setUserName", (req, res) => {
+    const userName = req.query.userName;
+    const newID = generateRandomID();
+
+    isIDUnique(newID, (unique) => {
+        if (unique) {
+            const insertUserIdIntoUserNamesQuery = "INSERT INTO UserNames (userid, name) VALUES (?, ?)";
+            db.run(insertUserIdIntoUserNamesQuery, [newID, userName], (err) => {
+                if (err) {
+                    return res.status(500).send('Error saving the user ID');
+                }
+                const insertUserIdIntoBaseStaminaQuery = "INSERT INTO BaseStamina (userid, base_stamina, mentions) VALUES (?, ?, ?)";
+                db.run(insertUserIdIntoBaseStaminaQuery, 
+                    [newID, null, null], (err) => {
+                        if (err) {
+                            return res.status(500).send('Error saving to BaseStamina table');
+                        }
+                        const insertUserIdIntoCurrentStaminaQuery = "INSERT INTO CurrentStamina (userid, current_stamina) VALUES (?, ?)";
+                        db.run(insertUserIdIntoCurrentStaminaQuery, 
+                            [newID, null], (err) => {
+                                if (err) {
+                                    return res.status(500).send('Error saving to CurrentStamina table');
+                                }
+                                const insertUserIdIntoUserGroupsQuery = "INSERT INTO UserGroups (userid, groupid) VALUES (?, ?)";
+                                db.run(insertUserIdIntoUserGroupsQuery, 
+                                    [newID, null], (err) => {
+                                        if (err) {
+                                            return res.status(500).send('Error saving to userGroups table');
+                                        }
+                                        res.send({ userid: newID, user_name: userName });
+                                    });
+                            });
+                    });
+            });
+        } else {
+            res.redirect('/generate-username'); 
+            return;
+        }
+    });
+});
 
 
 /**
  * @swagger
  * /calculateBaseStaminaByUserInput:
- *   get:
+ *   post:
  *     summary: ユーザのスタミナレベルに基づいて基本スタミナを設定し、BaseStaminaテーブルを更新する。
  *     parameters:
- *       - in: query
+ *       - in: body
  *         name: userId
  *         schema:
  *           type: string
  *         required: true
- *       - in: query
+ *       - in: body
  *         name: staminaLevel
  *         schema:
  *           type: integer
@@ -75,10 +125,10 @@ app.post("/setUserName", (req, res) => {});
  *         description: Database error.
  */
 
-app.get('/calculateBaseStaminaByUserInput', (req, res) => {
-    //req.data：userid:userid, stamina_level(integer): 1-5
-    const userId = req.query.userId;
-    const staminaLevel = parseInt(req.query.staminaLevel);
+app.post('/calculateBaseStaminaByUserInput', (req, res) => {
+    //req.body userid:userid, stamina_level(integer): 1-5
+    const userId = req.body.userId;
+    const staminaLevel = parseInt(req.body.staminaLevel);
     let baseStamina;
     switch (staminaLevel) {
         case 1:
@@ -110,15 +160,15 @@ app.get('/calculateBaseStaminaByUserInput', (req, res) => {
 /**
  * @swagger
  * /calculateInitialStaminaByCondition:
- *   get:
+ *   post:
  *     summary: Calculate initial stamina for today based on condition.
  *     parameters:
- *       - in: query
+ *       - in: body
  *         name: userId
  *         schema:
  *           type: string
  *         required: true
- *       - in: query
+ *       - in: body
  *         name: condition
  *         schema:
  *           type: string
@@ -130,7 +180,7 @@ app.get('/calculateBaseStaminaByUserInput', (req, res) => {
  *       500:
  *         description: Database error.
  */
-app.get("/calculateInitialStaminaByCondition", (req, res) => {});
+app.post("/calculateInitialStaminaByCondition", (req, res) => {});
 
 /**
  * @swagger
@@ -236,13 +286,13 @@ app.post("/createGroup", (req, res) => {});
 /**
  * @swagger
  * /generateRandomGroupId:
- *   get:
+ *   post:
  *     summary: Generate a random group ID.
  *     responses:
  *       200:
  *         description: Random group ID generated successfully.
  */
-app.get("/generateRandomGroupId", (req, res) => {});
+app.post("/generateRandomGroupId", (req, res) => {});
 
 
 /**
@@ -271,7 +321,7 @@ app.get("/generateRandomGroupId", (req, res) => {});
  */
 app.post("/storeMentionsInfo", (req, res) => {});
 
-app.get("/", (req, res) => {
+app.post("/", (req, res) => {
 	res.send("Hello, World!");
 });
 
