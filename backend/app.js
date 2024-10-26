@@ -2,8 +2,9 @@ const express = require("express");
 const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const app = express();
-const sqlite3 = require('sqlite3')
+const sqlite3 = require("sqlite3");
 const port = 3000;
+const moment = require("moment");
 
 app.use(express.json());
 
@@ -22,9 +23,9 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-const db = new sqlite3.Database("stamina.db")
+const db = new sqlite3.Database("stamina.db");
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 
 /**
@@ -110,7 +111,7 @@ app.get('/calculateBaseStaminaByUserInput', (req, res) => {
 /**
  * @swagger
  * /calculateInitialStaminaByCondition:
- *   get:
+ *   post:
  *     summary: Calculate initial stamina for today based on condition.
  *     parameters:
  *       - in: query
@@ -130,7 +131,50 @@ app.get('/calculateBaseStaminaByUserInput', (req, res) => {
  *       500:
  *         description: Database error.
  */
-app.get("/calculateInitialStaminaByCondition", (req, res) => {});
+app.post("/calculateInitialStaminaByCondition", (req, res) => {
+	const { userId, condition } = req.query;
+
+	const baseStaminaQuery = `SELECT base_stamina FROM BaseStamina WHERE userid = ?`;
+	db.get(baseStaminaQuery, [userId], (err, row) => {
+		if (err) return res.status(500).json({ error: "Database error" });
+		if (!row)
+			return res
+				.status(404)
+				.json({ error: "User not found in BaseStamina" });
+
+		const baseStamina = row.base_stamina;
+
+		const conditionMultipliers = {
+			5: 1.3, // とても良い
+			4: 1.1, // 良い
+			3: 1.0, // 普通
+			2: 0.9, // 悪い
+			1: 0.7, // とても悪い
+		};
+
+		const multiplier = conditionMultipliers[condition];
+
+		if (multiplier === undefined) {
+			return res.status(400).json({ error: "Invalid condition value" });
+		}
+
+		const calculatedStamina = Math.round(baseStamina * multiplier);
+
+		const updateStaminaQuery = `UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?`;
+		db.run(updateStaminaQuery, [calculatedStamina, userId], (err) => {
+			if (err)
+				return res
+					.status(500)
+					.json({ error: "Database error updating stamina" });
+			res.json({
+				userId,
+				baseStamina,
+				condition,
+				currentStamina: calculatedStamina,
+			});
+		});
+	});
+});
 
 /**
  * @swagger
