@@ -27,6 +27,23 @@ const db = new sqlite3.Database("stamina.db");
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// function
+const generateRandomUserID = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters[randomIndex];
+    }
+    return result;
+};
+
+const isUserIDUnique = (userid, callback) => {
+    db.get('SELECT userid FROM UserNames WHERE userid = ?', [userid], (err, row) => {
+        callback(!row); 
+    });
+};
+
 const generateRandomGroupID = () => {
 	return Math.floor(1000 + Math.random() * 9000);
 };
@@ -75,7 +92,7 @@ app.post("/setUserName", (req, res) => {
 	const userName = req.query.userName;
 	const newID = generateRandomUserID();
 
-	isIDUnique(newID, (unique) => {
+	isUserIDUnique(newID, (unique) => {
 		if (unique) {
 			const insertUserIdIntoUserNamesQuery =
 				"INSERT INTO UserNames (userid, name) VALUES (?, ?)";
@@ -615,6 +632,68 @@ app.get("/getUserName", (req, res) => {
 		res.json({ userid, name: row.name });
 	});
 });
+
+/**
+ * @swagger
+ * /displayTurtleStaminaLevel:
+ *   get:
+ *     summary: 現在のグループメンバーの体力から、亀にレベルを伝える。
+ *     parameters:
+ *       - in: query
+ *         name: groupId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Stamina check result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   type: integer
+ *                   description: Stamina check result (1, 2, or 3)
+ *                   example: 2
+ *       500:
+ *         description: Database error
+ */
+app.get("/displayTurtleStaminaLevel", (req, res) => {
+    const groupId = req.query.groupId;
+
+    const query = `
+        SELECT cs.todays_stamina, cs.current_stamina 
+        FROM CurrentStamina cs
+        JOIN UserGroups ug ON cs.userid = ug.userid
+        WHERE ug.groupId = ?
+    `;
+
+    db.all(query, [groupId], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: "Database error" });
+            return;
+        }
+
+        let result;
+        for (const row of rows) {
+            const { todays_stamina, current_stamina } = row;
+            console.log(row);
+            if (current_stamina <= todays_stamina / 3) {
+                result = 1;
+                break;
+            } else if (current_stamina <= (2 * todays_stamina) / 3) {
+                result = 2;
+            } else {
+                result = 3;
+            }
+        }
+
+        res.json({ result });
+    });
+});
+
+
 
 /**
  * @swagger
