@@ -332,33 +332,51 @@ app.post("/reduceStamina", (req, res) => {
     });
 });
 
-
-
-
 /**
  * @swagger
  * /recoverStaminaByRest:
  *   post:
- *     summary: Recover stamina based on rest time.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *               minutes:
- *                 type: integer
- *                 description: Number of minutes for stamina recovery
+ *     summary: current_staminaをtodays_staminaと同じにします。
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: Stamina recovered successfully.
  *       404:
  *         description: User not found or stamina not initialized.
  */
-app.post("/recoverStaminaByRest", (req, res) => {});
+
+app.post("/recoverStaminaByRest", (req, res) => {
+	const userId = req.query.userId;
+	const getStaminaQuery = "SELECT todays_stamina FROM CurrentStamina WHERE userid = ?";
+        db.get(getStaminaQuery, [userId], (err, staminaRow) => {
+            if (err) {
+                console.error("Error getting stamina from db:", err);
+                return res.status(500).send('Error getting stamina from db');
+            }
+
+            if (!staminaRow) {
+                console.log("No stamina data found for this user:", userId);  // デバッグ用出力
+                return res.status(404).send('No stamina data found for this user');
+            }
+
+			const todaysStamina = staminaRow.todays_stamina;
+			const recoverStaminaQuery = "UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
+			db.run(recoverStaminaQuery, [todaysStamina, userId], (err) => {
+				if (err) {
+					console.error("Error updating current_stamina", err);
+					return res.status(500).send('Error updating current_stamina');
+				}
+
+			})
+			res.json({ currentstamina: todaysStamina });
+		});
+
+});
 
 /**
  * @swagger
