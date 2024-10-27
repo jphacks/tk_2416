@@ -172,7 +172,7 @@ app.post("/setUserName", (req, res) => {
  *           type: string
  *         required: true
  *       - in: query
- *         name: staminaLevel
+ *         name: stamina
  *         schema:
  *           type: integer
  *         required: true
@@ -185,8 +185,23 @@ app.post("/setUserName", (req, res) => {
 
 app.post("/calculateBaseStaminaByUserInput", (req, res) => {
 	const userId = req.query.userId;
-	const staminaLevel = parseInt(req.query.staminaLevel);
+	const stamina = parseInt(req.query.stamina);
+	let staminaLevel;
 	let baseStamina;
+
+	if (stamina >= 1 && stamina <= 20) {
+		staminaLevel = 1;
+	} else if (stamina >= 21 && stamina <= 40) {
+		staminaLevel = 2;
+	} else if (stamina >= 41 && stamina <= 60) {
+		staminaLevel = 3;
+	} else if (stamina >= 61 && stamina <= 80) {
+		staminaLevel = 4;
+	} else if (stamina >= 81 && stamina <= 100) {
+		staminaLevel = 5;
+	} else {
+		staminaLevel = 3; // デフォルトの値
+	}
 
 	switch (staminaLevel) {
 		case 1:
