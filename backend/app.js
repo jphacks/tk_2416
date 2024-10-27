@@ -3,9 +3,12 @@ const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const app = express();
 const sqlite3 = require("sqlite3");
-const port = 3000;
+const port = 8000;
 const moment = require("moment");
-
+const cors = require('cors');
+const bodyParser = require('body-parser');
+app.use(cors());
+app.use(bodyParser.json());
 app.use(express.json());
 
 const swaggerOptions = {
@@ -82,7 +85,7 @@ function generateDummyData(userid) {
  *   post:
  *     summary: 名前とユーザIDのペアをUserNamesテーブルに格納する。
  *     parameters:
- *       - in: query
+ *       - in: body
  *         name: userName
  *         schema:
  *           type: string
@@ -94,7 +97,9 @@ function generateDummyData(userid) {
  *         description: Database error.
  */
 app.post("/setUserName", (req, res) => {
-	const userName = req.query.userName;
+	console.log("setUserName called ok!");
+	console.log("Request body:", req.body);
+	const userName = req.body.userName;
 	const newID = generateRandomUserID();
 
 	isUserIDUnique(newID, (unique) => {
@@ -166,16 +171,18 @@ app.post("/setUserName", (req, res) => {
  *   post:
  *     summary: ユーザのスタミナレベルに基づいて基本スタミナを設定し、BaseStaminaテーブルを更新する。
  *     parameters:
- *       - in: query
- *         name: userId
+ *       - in: body
+ *         name: body
  *         schema:
- *           type: string
- *         required: true
- *       - in: query
- *         name: staminaLevel
- *         schema:
- *           type: integer
- *         required: true
+ *           type: object
+ *           properties:
+ *             userId:
+ *               type: string
+ *             stamina:
+ *               type: integer
+ *           required:
+ *             - userId
+ *             - stamina
  *     responses:
  *       200:
  *         description: Base stamina calculated successfully.
@@ -184,9 +191,28 @@ app.post("/setUserName", (req, res) => {
  */
 
 app.post("/calculateBaseStaminaByUserInput", (req, res) => {
-	const userId = req.query.userId;
-	const staminaLevel = parseInt(req.query.staminaLevel);
+	const { userId, stamina } = req.body;
+
+	if (!userId || stamina === undefined) {
+		return res.status(400).json({ error: "Missing userId or stamina" });
+	}
+
+	let staminaLevel;
 	let baseStamina;
+
+	if (stamina >= 1 && stamina <= 20) {
+		staminaLevel = 1;
+	} else if (stamina >= 21 && stamina <= 40) {
+		staminaLevel = 2;
+	} else if (stamina >= 41 && stamina <= 60) {
+		staminaLevel = 3;
+	} else if (stamina >= 61 && stamina <= 80) {
+		staminaLevel = 4;
+	} else if (stamina >= 81 && stamina <= 100) {
+		staminaLevel = 5;
+	} else {
+		staminaLevel = 3; // デフォルトの値
+	}
 
 	switch (staminaLevel) {
 		case 1:
@@ -220,6 +246,7 @@ app.post("/calculateBaseStaminaByUserInput", (req, res) => {
 		res.json({ userId, baseStamina });
 	});
 });
+
 
 /**
  * @swagger
@@ -493,16 +520,18 @@ app.post("/generateRandomGroupId", (req, res) => {
  *   post:
  *     summary: Accepts a user ID and a mentions string, then updates the mentions information in the BaseStamina table for the specified user.
  *     parameters:
- *       - in: query
- *         name: userId
+ *       - in: body
+ *         name: body
  *         schema:
- *           type: string
- *         required: true
- *       - in: query
- *         name: mentions
- *         schema:
- *           type: string
- *         required: true
+ *           type: object
+ *           properties:
+ *             userId:
+ *               type: string
+ *             mentions:
+ *               type: string
+ *           required:
+ *             - userId
+ *             - mentions
  *     responses:
  *       200:
  *         description: Mentions information stored successfully.
@@ -513,22 +542,21 @@ app.post("/generateRandomGroupId", (req, res) => {
  */
 
 app.post("/storeMentionsInfo", (req, res) => {
-	const { userId, mentions } = req.query;
-
-	console.log("userId:", userId);
-	console.log("mentions:", mentions);
+	const { userId, mentions } = req.body;
 
 	if (!userId || !mentions) {
 		return res.status(400).json({ error: "Missing userId or mentions" });
 	}
 
+	console.log("userId:", userId);
+	console.log("mentions:", mentions);
+
 	const updateMentionsQuery = `UPDATE BaseStamina SET mentions = ? WHERE userid = ?`;
 
 	db.run(updateMentionsQuery, [mentions, userId], (err) => {
 		if (err) {
-			return res
-				.status(500)
-				.json({ error: "Database error updating mentions" });
+			console.error("Database error:", err);
+			return res.status(500).json({ error: "Database error updating mentions" });
 		}
 
 		res.json({
