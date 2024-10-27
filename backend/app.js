@@ -149,37 +149,6 @@ app.post("/setUserName", (req, res) => {
  *         description: Database error.
  */
 
-// app.post('/calculateBaseStaminaByUserInput', (req, res) => {
-//     //req.body userid:userid, stamina_level(integer): 1-5
-//     const userId = req.body.userId;
-//     const staminaLevel = parseInt(req.body.staminaLevel);
-//     let baseStamina;
-//     switch (staminaLevel) {
-//         case 1:
-//             baseStamina = 1800;
-//             break;
-//         case 2:
-//             baseStamina = 3600;
-//             break;
-//         case 3:
-//             baseStamina = 5400;
-//             break;
-//         case 4:
-//             baseStamina = 7200;
-//             break;
-//         case 5:
-//             baseStamina = 9000;
-//             break;
-//         default:
-//             baseStamina = 5400;
-//             break;
-//     }
-//     settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
-//     db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
-//             if (err) return res.status(500).json({ error: 'Database error' });
-//             res.json({userId, baseStamina});
-//         });
-// });
 
 app.post('/calculateBaseStaminaByUserInput', (req, res) => {
     const userId = req.query.userId;
