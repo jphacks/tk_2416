@@ -29,19 +29,24 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // function
 const generateRandomUserID = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters[randomIndex];
-    }
-    return result;
+	const characters =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	let result = "";
+	for (let i = 0; i < 8; i++) {
+		const randomIndex = Math.floor(Math.random() * characters.length);
+		result += characters[randomIndex];
+	}
+	return result;
 };
 
 const isUserIDUnique = (userid, callback) => {
-    db.get('SELECT userid FROM UserNames WHERE userid = ?', [userid], (err, row) => {
-        callback(!row); 
-    });
+	db.get(
+		"SELECT userid FROM UserNames WHERE userid = ?",
+		[userid],
+		(err, row) => {
+			callback(!row);
+		}
+	);
 };
 
 const generateRandomGroupID = () => {
@@ -322,22 +327,23 @@ app.post("/reduceStamina", (req, res) => {
 			return res.status(500).send("Error getting steps from db");
 		}
 
-            let newStamina;
-            if (steps <= 300) {
-                newStamina = staminaRow.current_stamina - 300
-            } else {
-                newStamina = staminaRow.current_stamina - steps;
-            }
-            const updateStaminaQuery = "UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
-            db.run(updateStaminaQuery, [newStamina, userId], (err) =>{
-                if (err) {
-                    console.error("Error updating stamina:", err);
-                    return res.status(500).send('Error updating stamina');
-                }
-                res.json({ currentstamina: newStamina });
-            });
-        });
-    });
+		let newStamina;
+		if (steps <= 300) {
+			newStamina = staminaRow.current_stamina - 300;
+		} else {
+			newStamina = staminaRow.current_stamina - steps;
+		}
+		const updateStaminaQuery =
+			"UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
+		db.run(updateStaminaQuery, [newStamina, userId], (err) => {
+			if (err) {
+				console.error("Error updating stamina:", err);
+				return res.status(500).send("Error updating stamina");
+			}
+			res.json({ currentstamina: newStamina });
+		});
+	});
+});
 
 /**
  * @swagger
@@ -552,15 +558,19 @@ app.post("/storeMentionsInfo", (req, res) => {
  */
 
 app.post("/removeUserFromGroupAfterEvent", (req, res) => {
-    const userId = req.query.userId;
-    const removeGroupIdQuery = "UPDATE UserGroups SET groupid = ? WHERE userid = ?";
-    db.run(removeGroupIdQuery, [null, userId], (err) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: "Failed to remove groupid" });
-        }
-        res.status(200).json({ message: "Groupid removed successfully", userId });
-    });
+	const userId = req.query.userId;
+	const removeGroupIdQuery =
+		"UPDATE UserGroups SET groupid = ? WHERE userid = ?";
+	db.run(removeGroupIdQuery, [null, userId], (err) => {
+		if (err) {
+			console.error(err.message);
+			return res.status(500).json({ error: "Failed to remove groupid" });
+		}
+		res.status(200).json({
+			message: "Groupid removed successfully",
+			userId,
+		});
+	});
 });
 
 /**
@@ -659,37 +669,37 @@ app.get("/getUserName", (req, res) => {
  *         description: Database error
  */
 app.get("/displayTurtleStaminaLevel", (req, res) => {
-    const groupId = req.query.groupId;
+	const groupId = req.query.groupId;
 
-    const query = `
+	const query = `
         SELECT cs.todays_stamina, cs.current_stamina 
         FROM CurrentStamina cs
         JOIN UserGroups ug ON cs.userid = ug.userid
         WHERE ug.groupId = ?
     `;
 
-    db.all(query, [groupId], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: "Database error" });
-            return;
-        }
+	db.all(query, [groupId], (err, rows) => {
+		if (err) {
+			res.status(500).json({ error: "Database error" });
+			return;
+		}
 
-        let result;
-        for (const row of rows) {
-            const { todays_stamina, current_stamina } = row;
-            console.log(row);
-            if (current_stamina <= todays_stamina / 3) {
-                result = 1;
-                break;
-            } else if (current_stamina <= (2 * todays_stamina) / 3) {
-                result = 2;
-            } else {
-                result = 3;
-            }
-        }
+		let result;
+		for (const row of rows) {
+			const { todays_stamina, current_stamina } = row;
+			console.log(row);
+			if (current_stamina <= todays_stamina / 3) {
+				result = 1;
+				break;
+			} else if (current_stamina <= (2 * todays_stamina) / 3) {
+				result = 2;
+			} else {
+				result = 3;
+			}
+		}
 
-        res.json({ result });
-    });
+		res.json({ result });
+	});
 });
 
 /**
@@ -751,34 +761,34 @@ app.get("/displayTurtleStaminaLevel", (req, res) => {
  *                   type: string
  *                   example: "Error retrieving group members"
  */
-app.get('/getGroupMembers',(req,res) => {
+app.get("/getGroupMembers", (req, res) => {
 	const userId = req.query.userId;
-	if (!userId){
-		return res.status(400).send('Error: userId is required');
+	if (!userId) {
+		return res.status(400).send("Error: userId is required");
 	}
 
 	const getGroupIdQuery = "SELECT groupid FROM UserGroups WHERE userid = ?";
 	db.get(getGroupIdQuery, [userId], (err, row) => {
-        if (err) {
-            return res.status(500).send('Error retrieving group ID');
-        }
-        
-        if (!row) {
-            return res.status(404).send('User not found in any group');
-        }
+		if (err) {
+			return res.status(500).send("Error retrieving group ID");
+		}
 
-        const groupId = row.groupid;
+		if (!row) {
+			return res.status(404).send("User not found in any group");
+		}
 
-        const getMembersQuery = "SELECT userid FROM UserGroups WHERE groupid = ?";
-        db.all(getMembersQuery, [groupId], (err, rows) => {
-            if (err) {
-                return res.status(500).send('Error retrieving group members');
-            }
-            res.json(rows);
-        });
-    });
+		const groupId = row.groupid;
+
+		const getMembersQuery =
+			"SELECT userid FROM UserGroups WHERE groupid = ?";
+		db.all(getMembersQuery, [groupId], (err, rows) => {
+			if (err) {
+				return res.status(500).send("Error retrieving group members");
+			}
+			res.json(rows);
+		});
+	});
 });
-
 
 /**
  * @swagger
@@ -901,6 +911,88 @@ app.get("/getGroupName", (req, res) => {
 		res.json({
 			groupid: parseInt(groupid, 10),
 			group_name: row.group_name,
+		});
+	});
+});
+
+/**
+ * @swagger
+ * /getStaminaGauge:
+ *   get:
+ *     summary: Retrieves today's stamina and current stamina for a given user.
+ *     description: Returns the today's stamina and current stamina values from the CurrentStamina table for the specified user ID.
+ *     parameters:
+ *       - in: query
+ *         name: userid
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the user whose stamina information is being retrieved.
+ *     responses:
+ *       200:
+ *         description: Stamina information retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userid:
+ *                   type: string
+ *                   example: "user123"
+ *                 todays_stamina:
+ *                   type: integer
+ *                   example: 7200
+ *                 current_stamina:
+ *                   type: integer
+ *                   example: 5400
+ *       404:
+ *         description: User not found in CurrentStamina.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User not found in CurrentStamina"
+ *       500:
+ *         description: Database error while retrieving stamina data.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Database error retrieving stamina data"
+ */
+app.get("/getStaminaGauge", (req, res) => {
+	const { userid } = req.query;
+
+	const getStaminaQuery = `
+        SELECT todays_stamina, current_stamina
+        FROM CurrentStamina
+        WHERE userid = ?
+    `;
+
+	db.get(getStaminaQuery, [userid], (err, row) => {
+		if (err) {
+			console.error("Database error:", err);
+			return res
+				.status(500)
+				.json({ error: "Database error retrieving stamina data" });
+		}
+
+		if (!row) {
+			return res
+				.status(404)
+				.json({ error: "User not found in CurrentStamina" });
+		}
+
+		res.json({
+			userid,
+			todays_stamina: row.todays_stamina,
+			current_stamina: row.current_stamina,
 		});
 	});
 });
