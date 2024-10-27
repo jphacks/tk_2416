@@ -4,6 +4,7 @@ import { Box, Typography, TextField, Slider, Button, Stack } from '@mui/material
 import { useState } from 'react';
 import { useRouter } from 'next/navigation'; // 修正: next/navigation からインポート
 import { Header1 } from '@/components/header1';
+
 import { setUserName, calculateBaseStamina, storeMentionsInfo } from './settingapi.tsx'; // API関数をインポート
 
 const NextButton = ({ onClick }) => {
@@ -17,6 +18,7 @@ const NextButton = ({ onClick }) => {
     </Button>
   );
 };
+
 
 export default function Setting() {
   const router = useRouter(); // useRouter フックを使用
@@ -65,18 +67,14 @@ export default function Setting() {
         backgroundColor: '#fff7e6',
       }}
     >
+
       <Stack spacing={3} mt={3}>
         <Header1 text="あなたについて教えてください。" />
 
-        <TextField
-          label="名前"
-          variant="outlined"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          InputProps={{
-            style: { borderColor: '#5a3824', borderRadius: 8 },
-          }}
-        />
+     
+
+
+          <TextInput hint="名前!!" />
 
         <TextField
           label="特別体質など"
@@ -89,6 +87,7 @@ export default function Setting() {
             style: { borderColor: '#5a3824', borderRadius: 8 },
           }}
         />
+
 
         <Box>
           <Typography sx={{ color: '#5a3824', mb: 1 }}>
