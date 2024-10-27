@@ -13,6 +13,8 @@ import NormalTurtle from '../../components/normalTurtle';
 import Setting from '../setting/page';
 import Head from 'next/head';
 
+import { TextInput } from '@/components/textInput';
+
 export default function aloneHome() {
   return (
 
@@ -32,7 +34,7 @@ export default function aloneHome() {
 
         
             <Stack spacing={2} sx={{ '& button': { m: 1 } }}>
-                    <TextButton url="joinGroup" text = "グループに参加"/>
+                    <TextInput hint="グループID" />
                     <NextButton url="togetherHome"/>
             </Stack>
        

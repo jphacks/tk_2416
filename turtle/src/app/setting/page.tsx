@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { Header1 } from '@/components/header1';
 import { NextButton } from "@/components/nextButton";
+import { TextInput } from '@/components/textInput';
 
 export default function Setting() {
   const [name, setName] = useState('');
@@ -27,20 +28,11 @@ export default function Setting() {
       }}
     >
      
-    
         <Stack spacing={3} mt={3}>
 
             <Header1 text="あなたについて教えてください。" />
 
-          <TextField
-            label="名前"
-            variant="outlined"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            InputProps={{
-              style: { borderColor: '#5a3824', borderRadius: 8 },
-            }}
-          />
+          <TextInput hint="名前!!" />
 
           <TextField
             label="特別体質など"
