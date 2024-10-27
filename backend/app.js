@@ -101,7 +101,7 @@ app.post("/setUserName", (req, res) => {
                         if (err) {
                             return res.status(500).send('Error saving to BaseStamina table');
                         }
-                        const insertUserIdIntoCurrentStaminaQuery = "INSERT INTO CurrentStamina (userid, todays_stamina, current_stamina) VALUES (?, ?)";
+                        const insertUserIdIntoCurrentStaminaQuery = "INSERT INTO CurrentStamina (userid, todays_stamina, current_stamina) VALUES (?, ?, ?)";
                         db.run(insertUserIdIntoCurrentStaminaQuery, 
                             [newID, null, null], (err) => {
                                 if (err) {
@@ -132,12 +132,12 @@ app.post("/setUserName", (req, res) => {
  *   post:
  *     summary: ユーザのスタミナレベルに基づいて基本スタミナを設定し、BaseStaminaテーブルを更新する。
  *     parameters:
- *       - in: body
+ *       - in: query
  *         name: userId
  *         schema:
  *           type: string
  *         required: true
- *       - in: body
+ *       - in: query
  *         name: staminaLevel
  *         schema:
  *           type: integer
@@ -149,11 +149,43 @@ app.post("/setUserName", (req, res) => {
  *         description: Database error.
  */
 
+// app.post('/calculateBaseStaminaByUserInput', (req, res) => {
+//     //req.body userid:userid, stamina_level(integer): 1-5
+//     const userId = req.body.userId;
+//     const staminaLevel = parseInt(req.body.staminaLevel);
+//     let baseStamina;
+//     switch (staminaLevel) {
+//         case 1:
+//             baseStamina = 1800;
+//             break;
+//         case 2:
+//             baseStamina = 3600;
+//             break;
+//         case 3:
+//             baseStamina = 5400;
+//             break;
+//         case 4:
+//             baseStamina = 7200;
+//             break;
+//         case 5:
+//             baseStamina = 9000;
+//             break;
+//         default:
+//             baseStamina = 5400;
+//             break;
+//     }
+//     settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
+//     db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
+//             if (err) return res.status(500).json({ error: 'Database error' });
+//             res.json({userId, baseStamina});
+//         });
+// });
+
 app.post('/calculateBaseStaminaByUserInput', (req, res) => {
-    //req.body userid:userid, stamina_level(integer): 1-5
-    const userId = req.body.userId;
-    const staminaLevel = parseInt(req.body.staminaLevel);
+    const userId = req.query.userId;
+    const staminaLevel = parseInt(req.query.staminaLevel);
     let baseStamina;
+
     switch (staminaLevel) {
         case 1:
             baseStamina = 1800;
@@ -174,12 +206,18 @@ app.post('/calculateBaseStaminaByUserInput', (req, res) => {
             baseStamina = 5400;
             break;
     }
-    settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
+
+    const settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
+    
     db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json({userId, baseStamina})
-        });
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ userId, baseStamina });
+    });
 });
+
 
 /**
  * @swagger
@@ -187,12 +225,12 @@ app.post('/calculateBaseStaminaByUserInput', (req, res) => {
  *   post:
  *     summary: ユーザの今日のコンディションに基づいてCurrentStaminaテーブルを更新する。
  *     parameters:
- *       - in: body
+ *       - in: query
  *         name: userId
  *         schema:
  *           type: string
  *         required: true
- *       - in: body
+ *       - in: query
  *         name: condition
  *         schema:
  *           type: string
@@ -243,7 +281,7 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
 				userId,
 				baseStamina,
 				condition,
-				currentStamina: calculatedStamina,
+				currentStamina: calculatedStamina
 			});
 		});
 	});
@@ -254,52 +292,61 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
  * /reduceStamina:
  *   post:
  *     summary: 10分に1回呼び出され、時間や歩数に応じてスタミナを減らす。
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *               hours:
- *                 type: integer
- *                 description: Number of hours for stamina reduction
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: query
+ *         name: num
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: Stamina reduced successfully.
  *       404:
  *         description: User not found or stamina not initialized.
  */
-app.post("/reduceStaminaByTime", (req, res) => {});
+app.post("/reduceStamina", (req, res) => {
+    const userId = req.query.userId;
+    const num = req.query.num;
 
-/**
- * @swagger
- * /createdummy:
- *   post:
- *     summary: createdummy
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *               steps:
- *                 type: integer
- *                 description: Number of steps for stamina reduction
- *     responses:
- *       200:
- *         description: Stamina reduced successfully.
- *       404:
- *         description: User not found or stamina not initialized.
- */
-app.post("/createdummy", (req, res) => {
+    console.log("Received userId:", userId, "num:", num);  // デバッグ用出力
 
+    const getStepsQuery = "SELECT steps FROM Dummy WHERE userid = ? AND num = ?";
+    db.get(getStepsQuery, [userId, num], (err, stepsRow) => {
+        if (err) {
+            console.error("Error getting steps from db:", err);
+            return res.status(500).send('Error getting steps from db');
+        }
+
+        if (!stepsRow) {
+            console.log("No steps found for this user and num:", userId, num);  // デバッグ用出力
+            return res.status(404).send('No steps found for this user and num');
+        }
+
+        const getStaminaQuery = "SELECT todays_stamina, current_stamina FROM CurrentStamina WHERE userid = ?";
+        db.get(getStaminaQuery, [userId], (err, staminaRow) => {
+            if (err) {
+                console.error("Error getting stamina from db:", err);
+                return res.status(500).send('Error getting stamina from db');
+            }
+
+            if (!staminaRow) {
+                console.log("No stamina data found for this user:", userId);  // デバッグ用出力
+                return res.status(404).send('No stamina data found for this user');
+            }
+
+            console.log("Steps:", stepsRow, "Stamina:", staminaRow);
+            res.json({ steps: stepsRow.steps, stamina: staminaRow });
+        });
+    });
 });
+
+
+
 
 /**
  * @swagger
@@ -467,10 +514,9 @@ app.post("/storeMentionsInfo", (req, res) => {});
  *                         type: integer
  */
 app.post('/generateDummy', (req, res) => {
-    const userid = req.query.userid; // Get userid from query parameters
-    const dummyData = generateDummyData(userid); // Generate dummy data
+    const userid = req.query.userid;
+    const dummyData = generateDummyData(userid);
 
-    // Insert dummy data into the database
     dummyData.forEach(data => {
         db.run(`INSERT INTO Dummy (userid, num, steps) VALUES (?, ?, ?)`, [data.userid, data.num, data.steps], function(err) {
             if (err) {
