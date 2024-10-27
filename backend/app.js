@@ -338,7 +338,6 @@ app.post("/reduceStamina", (req, res) => {
             });
         });
     });
-});
 
 /**
  * @swagger
