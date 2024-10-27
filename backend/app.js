@@ -693,6 +693,92 @@ app.get("/displayTurtleStaminaLevel", (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /getGroupMembers:
+ *   post:
+ *     summary: 指定されたユーザIDと同じグループのメンバーを取得する
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         description: グループメンバーを取得するためのユーザID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 同じグループのユーザIDのリストを返す
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   userid:
+ *                     type: string
+ *                     description: 同じグループに属するユーザのID
+ *             example:
+ *               - userid: "12345"
+ *               - userid: "67890"
+ *       400:
+ *         description: userId パラメータが不足している場合のエラー
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Error: userId is required"
+ *       404:
+ *         description: 指定されたユーザがどのグループにも属していない場合のエラー
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User not found in any group"
+ *       500:
+ *         description: サーバーエラーが発生した場合のエラー
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Error retrieving group members"
+ */
+app.get('/getGroupMembers',(req,res) => {
+	const userId = req.query.userId;
+	if (!userId){
+		return res.status(400).send('Error: userId is required');
+	}
+
+	const getGroupIdQuery = "SELECT groupid FROM UserGroups WHERE userid = ?";
+	db.get(getGroupIdQuery, [userId], (err, row) => {
+        if (err) {
+            return res.status(500).send('Error retrieving group ID');
+        }
+        
+        if (!row) {
+            return res.status(404).send('User not found in any group');
+        }
+
+        const groupId = row.groupid;
+
+        const getMembersQuery = "SELECT userid FROM UserGroups WHERE groupid = ?";
+        db.all(getMembersQuery, [groupId], (err, rows) => {
+            if (err) {
+                return res.status(500).send('Error retrieving group members');
+            }
+            res.json(rows);
+        });
+    });
+});
 
 
 /**
