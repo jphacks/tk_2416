@@ -23,8 +23,10 @@
 * 
 
 #### フレームワーク・ライブラリ・モジュール
-* 
-* 
+* JavaScript
+* React.js
+* Node.js
+* SQLite
 
 #### デバイス
 * 
