@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 
 import { Header2} from "@/components/header2";
@@ -34,7 +33,7 @@ export default function aloneHome() {
         
             <Stack spacing={2} sx={{ '& button': { m: 1 } }}>
                     <TextButton url="joinGroup" text = "グループに参加"/>
-                    <TextButton url="invitePeople" text = "グループを作る"/>
+                    <NextButton url="togetherHome"/>
             </Stack>
        
             </Stack>

@@ -20,12 +20,14 @@ export default function Intro() {
       backgroundColor: '#f9f4e8',
     }}>
       <Stack spacing={2}>
+
       <Typography
           variant="h3"
           sx={{ color: '#5a3824', fontWeight: 'bold', mb: 2 }}
         >
           turtle stamina
         </Typography>
+        
         <NormalTurtle/>
         <Header2 text="友達の体力を把握して旅行を楽しもう！"/>
         <NextButton url="setting" />
