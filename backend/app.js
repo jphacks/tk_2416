@@ -305,44 +305,22 @@ app.post("/reduceStamina", (req, res) => {
 			return res.status(500).send("Error getting steps from db");
 		}
 
-		if (!stepsRow) {
-			console.log("No steps found for this user and num:", userId, num); // デバッグ用出力
-			return res.status(404).send("No steps found for this user and num");
-		}
-		const steps = stepsRow.steps;
-
-		const getStaminaQuery =
-			"SELECT todays_stamina, current_stamina FROM CurrentStamina WHERE userid = ?";
-		db.get(getStaminaQuery, [userId], (err, staminaRow) => {
-			if (err) {
-				console.error("Error getting stamina from db:", err);
-				return res.status(500).send("Error getting stamina from db");
-			}
-
-			if (!staminaRow) {
-				console.log("No stamina data found for this user:", userId); // デバッグ用出力
-				return res
-					.status(404)
-					.send("No stamina data found for this user");
-			}
-
-			let newStamina;
-			if (steps <= 300) {
-				newStamina = staminaRow.current_stamina - 300;
-			} else {
-				newStamina = staminaRow.current_stamina - steps;
-			}
-			const updateStaminaQuery =
-				"UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
-			db.run(updateStaminaQuery, [newStamina, userId], (err) => {
-				if (err) {
-					console.error("Error updating stamina:", err);
-					return res.status(500).send("Error updating stamina");
-				}
-				res.json({ steps: steps, currentstamina: newStamina });
-			});
-		});
-	});
+            let newStamina;
+            if (steps <= 300) {
+                newStamina = staminaRow.current_stamina - 300
+            } else {
+                newStamina = staminaRow.current_stamina - steps;
+            }
+            const updateStaminaQuery = "UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
+            db.run(updateStaminaQuery, [newStamina, userId], (err) =>{
+                if (err) {
+                    console.error("Error updating stamina:", err);
+                    return res.status(500).send('Error updating stamina');
+                }
+                res.json({ currentstamina: newStamina });
+            });
+        });
+    });
 });
 
 /**
@@ -537,6 +515,36 @@ app.post("/storeMentionsInfo", (req, res) => {
 			mentions,
 		});
 	});
+});
+
+/**
+ * @swagger
+ * /removeUserFromGroupAfterEvent:
+ *   post:
+ *     summary: おでかけ終了したときに、ユーザIDとグループIDの紐付けを削除する。
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: remove groupid successfully.
+ *       404:
+ *         description: User not found.
+ */
+
+app.post("/removeUserFromGroupAfterEvent", (req, res) => {
+    const userId = req.query.userId;
+    const removeGroupIdQuery = "UPDATE UserGroups SET groupid = ? WHERE userid = ?";
+    db.run(removeGroupIdQuery, [null, userId], (err) => {
+        if (err) {
+            console.error(err.message);
+            return res.status(500).json({ error: "Failed to remove groupid" });
+        }
+        res.status(200).json({ message: "Groupid removed successfully", userId });
+    });
 });
 
 /**
