@@ -326,7 +326,7 @@ app.post("/reduceStamina", (req, res) => {
                     console.error("Error updating stamina:", err);
                     return res.status(500).send('Error updating stamina');
                 }
-                res.json({ steps: steps, currentstamina: newStamina });
+                res.json({ currentstamina: newStamina });
             })
         });
     });
@@ -508,6 +508,37 @@ app.post("/storeMentionsInfo", (req, res) => {
 		});
 	});
 });
+
+/**
+ * @swagger
+ * /removeUserFromGroupAfterEvent:
+ *   post:
+ *     summary: おでかけ終了したときに、ユーザIDとグループIDの紐付けを削除する。
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: remove groupid successfully.
+ *       404:
+ *         description: User not found.
+ */
+
+app.post("/removeUserFromGroupAfterEvent", (req, res) => {
+    const userId = req.query.userId;
+    const removeGroupIdQuery = "UPDATE UserGroups SET groupid = ? WHERE userid = ?";
+    db.run(removeGroupIdQuery, [null, userId], (err) => {
+        if (err) {
+            console.error(err.message);
+            return res.status(500).json({ error: "Failed to remove groupid" });
+        }
+        res.status(200).json({ message: "Groupid removed successfully", userId });
+    });
+});
+
 
 /**
  * @swagger
