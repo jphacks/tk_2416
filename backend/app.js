@@ -191,6 +191,7 @@ app.post("/setUserName", (req, res) => {
  */
 
 app.post("/calculateBaseStaminaByUserInput", (req, res) => {
+	console.log("calculateBaseStaminaByUserInput is called ok!");
 	const { userId, stamina } = req.body;
 
 	if (!userId || stamina === undefined) {
@@ -272,6 +273,7 @@ app.post("/calculateBaseStaminaByUserInput", (req, res) => {
  *         description: Database error.
  */
 app.post("/calculateInitialStaminaByCondition", (req, res) => {
+	console.log("calculateInitialStaminaByCondition is called ok!");
 	const { userId, condition } = req.query;
 
 	const baseStaminaQuery = `SELECT base_stamina FROM BaseStamina WHERE userid = ?`;
@@ -343,6 +345,7 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
  *         description: User not found or stamina not initialized.
  */
 app.post("/reduceStamina", (req, res) => {
+	console.log("reduceStamina is called ok!");
 	const userId = req.query.userId;
 	const num = req.query.num;
 
@@ -391,6 +394,7 @@ app.post("/reduceStamina", (req, res) => {
  */
 
 app.post("/recoverStaminaByRest", (req, res) => {
+	console.log("recoverStaminaByRest is called ok!");
 	const userId = req.query.userId;
 	const getStaminaQuery =
 		"SELECT todays_stamina FROM CurrentStamina WHERE userid = ?";
@@ -441,6 +445,7 @@ app.post("/recoverStaminaByRest", (req, res) => {
  *         description: Database error.
  */
 app.post("/joinGroup", (req, res) => {
+	console.log("joinGroup is called ok!");
 	const userId = req.query.userId;
 	const groupId = req.query.groupId;
 	const userGroupsQuery =
@@ -476,6 +481,7 @@ app.post("/joinGroup", (req, res) => {
  *         description: Database error.
  */
 app.post("/generateRandomGroupId", (req, res) => {
+	console.log("generateRandomGroupId is called ok!");
 	const userId = req.query.userId;
 	const groupName = req.query.groupName;
 	const newID = generateRandomGroupID();
@@ -542,6 +548,7 @@ app.post("/generateRandomGroupId", (req, res) => {
  */
 
 app.post("/storeMentionsInfo", (req, res) => {
+	console.log("storeMentionsInfo is called ok!");
 	const { userId, mentions } = req.body;
 
 	if (!userId || !mentions) {
@@ -586,6 +593,7 @@ app.post("/storeMentionsInfo", (req, res) => {
  */
 
 app.post("/removeUserFromGroupAfterEvent", (req, res) => {
+	console.log("removeUserFromGroupAfterEvent");
 	const userId = req.query.userId;
 	const removeGroupIdQuery =
 		"UPDATE UserGroups SET groupid = ? WHERE userid = ?";
@@ -650,6 +658,7 @@ app.post("/removeUserFromGroupAfterEvent", (req, res) => {
  *                   example: "Database error retrieving user name"
  */
 app.get("/getUserName", (req, res) => {
+	console.log("getUserName is called ok!");
 	const { userid } = req.query;
 
 	const getUserNameQuery = "SELECT name FROM UserNames WHERE userid = ?";
@@ -697,6 +706,7 @@ app.get("/getUserName", (req, res) => {
  *         description: Database error
  */
 app.get("/displayTurtleStaminaLevel", (req, res) => {
+	console.log("displayTurtleStaminaLevel is called ok!");
 	const groupId = req.query.groupId;
 
 	const query = `
@@ -790,6 +800,7 @@ app.get("/displayTurtleStaminaLevel", (req, res) => {
  *                   example: "Error retrieving group members"
  */
 app.get("/getGroupMembers", (req, res) => {
+	console.log("getGroupMembers is called ok!");
 	const userId = req.query.userId;
 	if (!userId) {
 		return res.status(400).send("Error: userId is required");
@@ -853,6 +864,7 @@ app.get("/getGroupMembers", (req, res) => {
  *                         type: integer
  */
 app.post("/generateDummy", (req, res) => {
+	console.log("generateDummy is called ok!");
 	const userid = req.query.userid;
 	const dummyData = generateDummyData(userid);
 
