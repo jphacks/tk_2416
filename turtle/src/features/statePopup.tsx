@@ -1,5 +1,6 @@
 import React from 'react';
-import { Radio, RadioGroup, FormControl, FormControlLabel, Typography, Button, Paper } from '@mui/material';
+import { Radio, RadioGroup, FormControl, FormControlLabel, Typography,  Paper } from '@mui/material';
+import { NextButton } from '@/components/nextButton';
 
 const HealthPopup = () => {
   return (
@@ -13,7 +14,9 @@ const HealthPopup = () => {
         backgroundColor: '#FFF8E1'
       }}
     >
+
       <FormControl component="fieldset">
+        <br></br>
         <Typography variant="h6" style={{ marginBottom: '20px', color: '#6D4C41', fontWeight: 'bold' }}>
           今日の体調は？
         </Typography>
@@ -24,18 +27,12 @@ const HealthPopup = () => {
           <FormControlLabel value="bad" control={<Radio />} label="悪い" />
           <FormControlLabel value="veryBad" control={<Radio />} label="とても悪い" />
         </RadioGroup>
-        <Button
-          variant="contained"
-          style={{
-            marginTop: '20px',
-            backgroundColor: '#2E7D32',
-            color: '#FFFFFF',
-            borderRadius: '20px',
-            padding: '10px 20px'
-          }}
-        >
-          ▶︎
-        </Button>
+        <br></br>
+
+        <NextButton url="togetherHome" />
+
+       
+        <br></br>
       </FormControl>
     </Paper>
   );

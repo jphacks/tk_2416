@@ -1,17 +1,15 @@
 import * as React from 'react';
 
-import { Header2} from "@/components/header2";
-import { NextButton } from "@/components/nextButton";
-import { SettingButton } from '@/components/settingButton';
-import { TextButton } from '@/components/textButton';
 import { Header1 } from '@/components/header1';
+import { Header3 } from '@/components/header3';
 
-import Box from '@mui/material/Box';
+import { NextButton } from "@/components/nextButton";
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import NormalTurtle from '../../components/normalTurtle';
-import Setting from '../setting/page';
-import Head from 'next/head';
+
+
+import { TextInput } from '@/components/textInput';
 
 export default function aloneHome() {
   return (
@@ -32,7 +30,12 @@ export default function aloneHome() {
 
         
             <Stack spacing={2} sx={{ '& button': { m: 1 } }}>
-                    <TextButton url="joinGroup" text = "グループに参加"/>
+                <Stack direction="row" >
+                    <Header3 text="グループID" />
+                    <TextInput hint="" />
+                </Stack>
+                    
+
                     <NextButton url="togetherHome"/>
             </Stack>
        
