@@ -282,8 +282,6 @@ app.post("/reduceStamina", (req, res) => {
     const userId = req.query.userId;
     const num = req.query.num;
 
-    console.log("Received userId:", userId, "num:", num);  // デバッグ用出力
-
     const getStepsQuery = "SELECT steps FROM Dummy WHERE userid = ? AND num = ?";
     db.get(getStepsQuery, [userId, num], (err, stepsRow) => {
         if (err) {
@@ -295,6 +293,7 @@ app.post("/reduceStamina", (req, res) => {
             console.log("No steps found for this user and num:", userId, num);  // デバッグ用出力
             return res.status(404).send('No steps found for this user and num');
         }
+        const steps = stepsRow.steps;
 
         const getStaminaQuery = "SELECT todays_stamina, current_stamina FROM CurrentStamina WHERE userid = ?";
         db.get(getStaminaQuery, [userId], (err, staminaRow) => {
@@ -308,8 +307,20 @@ app.post("/reduceStamina", (req, res) => {
                 return res.status(404).send('No stamina data found for this user');
             }
 
-            console.log("Steps:", stepsRow, "Stamina:", staminaRow);
-            res.json({ steps: stepsRow.steps, stamina: staminaRow });
+            let newStamina;
+            if (steps <= 300) {
+                newStamina = staminaRow.current_stamina - 300
+            } else {
+                newStamina = staminaRow.current_stamina - steps;
+            }
+            const updateStaminaQuery = "UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
+            db.run(updateStaminaQuery, [newStamina, userId], (err) =>{
+                if (err) {
+                    console.error("Error updating stamina:", err);
+                    return res.status(500).send('Error updating stamina');
+                }
+                res.json({ steps: steps, currentstamina: newStamina });
+            })
         });
     });
 });
