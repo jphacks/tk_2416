@@ -620,7 +620,7 @@ app.get("/displayTurtleStaminaLevel", (req, res) => {
 /**
  * @swagger
  * /getGroupMembers:
- *   post:
+ *   get:
  *     summary: 指定されたユーザIDと同じグループのメンバーを取得する
  *     parameters:
  *       - in: query
