@@ -343,30 +343,30 @@ app.post("/reduceStamina", (req, res) => {
 
 app.post("/recoverStaminaByRest", (req, res) => {
 	const userId = req.query.userId;
-	const getStaminaQuery = "SELECT todays_stamina FROM CurrentStamina WHERE userid = ?";
-        db.get(getStaminaQuery, [userId], (err, staminaRow) => {
-            if (err) {
-                console.error("Error getting stamina from db:", err);
-                return res.status(500).send('Error getting stamina from db');
-            }
+	const getStaminaQuery =
+		"SELECT todays_stamina FROM CurrentStamina WHERE userid = ?";
+	db.get(getStaminaQuery, [userId], (err, staminaRow) => {
+		if (err) {
+			console.error("Error getting stamina from db:", err);
+			return res.status(500).send("Error getting stamina from db");
+		}
 
-            if (!staminaRow) {
-                console.log("No stamina data found for this user:", userId);  // デバッグ用出力
-                return res.status(404).send('No stamina data found for this user');
-            }
+		if (!staminaRow) {
+			console.log("No stamina data found for this user:", userId); // デバッグ用出力
+			return res.status(404).send("No stamina data found for this user");
+		}
 
-			const todaysStamina = staminaRow.todays_stamina;
-			const recoverStaminaQuery = "UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
-			db.run(recoverStaminaQuery, [todaysStamina, userId], (err) => {
-				if (err) {
-					console.error("Error updating current_stamina", err);
-					return res.status(500).send('Error updating current_stamina');
-				}
-
-			})
-			res.json({ currentstamina: todaysStamina });
+		const todaysStamina = staminaRow.todays_stamina;
+		const recoverStaminaQuery =
+			"UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
+		db.run(recoverStaminaQuery, [todaysStamina, userId], (err) => {
+			if (err) {
+				console.error("Error updating current_stamina", err);
+				return res.status(500).send("Error updating current_stamina");
+			}
 		});
-
+		res.json({ currentstamina: todaysStamina });
+	});
 });
 
 /**
@@ -667,6 +667,78 @@ app.post("/generateDummy", (req, res) => {
 	});
 
 	res.json({ message: "Dummy data generated successfully", data: dummyData });
+});
+
+/**
+ * @swagger
+ * /getGroupName:
+ *   get:
+ *     summary: Retrieve the group name associated with a specific group ID.
+ *     description: Returns the name of the group based on the provided group ID from the Groups table.
+ *     parameters:
+ *       - in: query
+ *         name: groupid
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the group whose name is being retrieved.
+ *     responses:
+ *       200:
+ *         description: Group name retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 groupid:
+ *                   type: integer
+ *                   example: 1234
+ *                 group_name:
+ *                   type: string
+ *                   example: "Development Team"
+ *       404:
+ *         description: Group not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Group not found"
+ *       500:
+ *         description: Database error while retrieving group name.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Database error retrieving group name"
+ */
+app.get("/getGroupName", (req, res) => {
+	const { groupid } = req.query;
+
+	const getGroupNameQuery = "SELECT group_name FROM Groups WHERE groupid = ?";
+
+	db.get(getGroupNameQuery, [groupid], (err, row) => {
+		if (err) {
+			console.error("Database error:", err);
+			return res
+				.status(500)
+				.json({ error: "Database error retrieving group name" });
+		}
+
+		if (!row) {
+			return res.status(404).json({ error: "Group not found" });
+		}
+
+		res.json({
+			groupid: parseInt(groupid, 10),
+			group_name: row.group_name,
+		});
+	});
 });
 
 app.listen(port, () => {
