@@ -28,26 +28,30 @@ const db = new sqlite3.Database("stamina.db");
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 const generateRandomGroupID = () => {
-    return Math.floor(1000 + Math.random() * 9000);
+	return Math.floor(1000 + Math.random() * 9000);
 };
 
 const isGroupIDUnique = (groupid, callback) => {
-    db.get('SELECT groupid FROM Groups WHERE groupid = ?', [groupid], (err, row) => {
-        callback(!row);
-    });
+	db.get(
+		"SELECT groupid FROM Groups WHERE groupid = ?",
+		[groupid],
+		(err, row) => {
+			callback(!row);
+		}
+	);
 };
 
 function generateDummyData(userid) {
-    const dummyData = [];
+	const dummyData = [];
 
-    for (let i = 0; i < 20; i++) {
-        dummyData.push({
-            userid: userid,
-            num: i+1,
-            steps: Math.floor(Math.random() * 2000)
-        });
-    }
-    return dummyData;
+	for (let i = 0; i < 20; i++) {
+		dummyData.push({
+			userid: userid,
+			num: i + 1,
+			steps: Math.floor(Math.random() * 2000),
+		});
+	}
+	return dummyData;
 }
 
 /**
@@ -68,8 +72,8 @@ function generateDummyData(userid) {
  *         description: Database error.
  */
 app.post("/setUserName", (req, res) => {
-  const userName = req.query.userName;
-  const newID = generateRandomUserID();
+	const userName = req.query.userName;
+	const newID = generateRandomUserID();
 
 	isIDUnique(newID, (unique) => {
 		if (unique) {
@@ -157,43 +161,43 @@ app.post("/setUserName", (req, res) => {
  *         description: Database error.
  */
 
-app.post('/calculateBaseStaminaByUserInput', (req, res) => {
-    const userId = req.query.userId;
-    const staminaLevel = parseInt(req.query.staminaLevel);
-    let baseStamina;
+app.post("/calculateBaseStaminaByUserInput", (req, res) => {
+	const userId = req.query.userId;
+	const staminaLevel = parseInt(req.query.staminaLevel);
+	let baseStamina;
 
-    switch (staminaLevel) {
-        case 1:
-            baseStamina = 1800;
-            break;
-        case 2:
-            baseStamina = 3600;
-            break;
-        case 3:
-            baseStamina = 5400;
-            break;
-        case 4:
-            baseStamina = 7200;
-            break;
-        case 5:
-            baseStamina = 9000;
-            break;
-        default:
-            baseStamina = 5400;
-            break;
-    }
+	switch (staminaLevel) {
+		case 1:
+			baseStamina = 1800;
+			break;
+		case 2:
+			baseStamina = 3600;
+			break;
+		case 3:
+			baseStamina = 5400;
+			break;
+		case 4:
+			baseStamina = 7200;
+			break;
+		case 5:
+			baseStamina = 9000;
+			break;
+		default:
+			baseStamina = 5400;
+			break;
+	}
 
-    const settingBaseStaminaQuery = "UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
-    
-    db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        res.json({ userId, baseStamina });
-    });
+	const settingBaseStaminaQuery =
+		"UPDATE BaseStamina SET base_stamina = ? WHERE userid = ?;";
+
+	db.run(settingBaseStaminaQuery, [baseStamina, userId], (err) => {
+		if (err) {
+			console.error("Database error:", err);
+			return res.status(500).json({ error: "Database error" });
+		}
+		res.json({ userId, baseStamina });
+	});
 });
-
 
 /**
  * @swagger
@@ -248,18 +252,22 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
 		const calculatedStamina = Math.round(baseStamina * multiplier);
 
 		const updateStaminaQuery = `UPDATE CurrentStamina SET current_stamina = ?, todays_stamina = ? WHERE userid = ?`;
-		db.run(updateStaminaQuery, [calculatedStamina, calculatedStamina, userId], (err) => {
-			if (err)
-				return res
-					.status(500)
-					.json({ error: "Database error updating stamina" });
-			res.json({
-				userId,
-				baseStamina,
-				condition,
-				currentStamina: calculatedStamina
-			});
-		});
+		db.run(
+			updateStaminaQuery,
+			[calculatedStamina, calculatedStamina, userId],
+			(err) => {
+				if (err)
+					return res
+						.status(500)
+						.json({ error: "Database error updating stamina" });
+				res.json({
+					userId,
+					baseStamina,
+					condition,
+					currentStamina: calculatedStamina,
+				});
+			}
+		);
 	});
 });
 
@@ -286,50 +294,55 @@ app.post("/calculateInitialStaminaByCondition", (req, res) => {
  *         description: User not found or stamina not initialized.
  */
 app.post("/reduceStamina", (req, res) => {
-    const userId = req.query.userId;
-    const num = req.query.num;
+	const userId = req.query.userId;
+	const num = req.query.num;
 
-    const getStepsQuery = "SELECT steps FROM Dummy WHERE userid = ? AND num = ?";
-    db.get(getStepsQuery, [userId, num], (err, stepsRow) => {
-        if (err) {
-            console.error("Error getting steps from db:", err);
-            return res.status(500).send('Error getting steps from db');
-        }
+	const getStepsQuery =
+		"SELECT steps FROM Dummy WHERE userid = ? AND num = ?";
+	db.get(getStepsQuery, [userId, num], (err, stepsRow) => {
+		if (err) {
+			console.error("Error getting steps from db:", err);
+			return res.status(500).send("Error getting steps from db");
+		}
 
-        if (!stepsRow) {
-            console.log("No steps found for this user and num:", userId, num);  // デバッグ用出力
-            return res.status(404).send('No steps found for this user and num');
-        }
-        const steps = stepsRow.steps;
+		if (!stepsRow) {
+			console.log("No steps found for this user and num:", userId, num); // デバッグ用出力
+			return res.status(404).send("No steps found for this user and num");
+		}
+		const steps = stepsRow.steps;
 
-        const getStaminaQuery = "SELECT todays_stamina, current_stamina FROM CurrentStamina WHERE userid = ?";
-        db.get(getStaminaQuery, [userId], (err, staminaRow) => {
-            if (err) {
-                console.error("Error getting stamina from db:", err);
-                return res.status(500).send('Error getting stamina from db');
-            }
+		const getStaminaQuery =
+			"SELECT todays_stamina, current_stamina FROM CurrentStamina WHERE userid = ?";
+		db.get(getStaminaQuery, [userId], (err, staminaRow) => {
+			if (err) {
+				console.error("Error getting stamina from db:", err);
+				return res.status(500).send("Error getting stamina from db");
+			}
 
-            if (!staminaRow) {
-                console.log("No stamina data found for this user:", userId);  // デバッグ用出力
-                return res.status(404).send('No stamina data found for this user');
-            }
+			if (!staminaRow) {
+				console.log("No stamina data found for this user:", userId); // デバッグ用出力
+				return res
+					.status(404)
+					.send("No stamina data found for this user");
+			}
 
-            let newStamina;
-            if (steps <= 300) {
-                newStamina = staminaRow.current_stamina - 300
-            } else {
-                newStamina = staminaRow.current_stamina - steps;
-            }
-            const updateStaminaQuery = "UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
-            db.run(updateStaminaQuery, [newStamina, userId], (err) =>{
-                if (err) {
-                    console.error("Error updating stamina:", err);
-                    return res.status(500).send('Error updating stamina');
-                }
-                res.json({ steps: steps, currentstamina: newStamina });
-            })
-        });
-    });
+			let newStamina;
+			if (steps <= 300) {
+				newStamina = staminaRow.current_stamina - 300;
+			} else {
+				newStamina = staminaRow.current_stamina - steps;
+			}
+			const updateStaminaQuery =
+				"UPDATE CurrentStamina SET current_stamina = ? WHERE userid = ?";
+			db.run(updateStaminaQuery, [newStamina, userId], (err) => {
+				if (err) {
+					console.error("Error updating stamina:", err);
+					return res.status(500).send("Error updating stamina");
+				}
+				res.json({ steps: steps, currentstamina: newStamina });
+			});
+		});
+	});
 });
 
 /**
@@ -401,15 +414,16 @@ app.post("/recoverStaminaByRest", (req, res) => {
  *         description: Database error.
  */
 app.post("/joinGroup", (req, res) => {
-    const userId = req.query.userId;
-    const groupId = req.query.groupId;
-    const userGroupsQuery = "UPDATE UserGroups SET groupid = ? WHERE userId = ?";
-    db.run(userGroupsQuery, [groupId, userId], (err) => {
-        if (err) {
-            return res.status(500).send('Error updating the group ID');
-        }
-        res.send({ userid: userId, groupid: groupId });
-    });
+	const userId = req.query.userId;
+	const groupId = req.query.groupId;
+	const userGroupsQuery =
+		"UPDATE UserGroups SET groupid = ? WHERE userId = ?";
+	db.run(userGroupsQuery, [groupId, userId], (err) => {
+		if (err) {
+			return res.status(500).send("Error updating the group ID");
+		}
+		res.send({ userid: userId, groupid: groupId });
+	});
 });
 
 /**
@@ -435,26 +449,42 @@ app.post("/joinGroup", (req, res) => {
  *         description: Database error.
  */
 app.post("/generateRandomGroupId", (req, res) => {
-    const userId = req.query.userId;
-    const groupName = req.query.groupName;
-    const newID = generateRandomGroupID();
-    isGroupIDUnique(newID, (unique) => {
-        if (unique) {
-            db.run("INSERT INTO Groups (groupid, group_name) VALUES (?, ?)", [newID, groupName], (err) => {
-                if (err) {
-                    return res.status(500).send('Error saving the group ID');
-                }
-                db.run("UPDATE UserGroups SET groupid = ? WHERE userid = ?", [newID, userId], (err) => {
-                    if (err) {
-                        return res.status(500).send('Error saving the group ID');
-                    }
-                    res.send({ userid: userId, group_name:groupName, groupid: newID });
-                });
-            });
-        } else {
-            res.redirect('/generate-groupid');
-        }
-    });
+	const userId = req.query.userId;
+	const groupName = req.query.groupName;
+	const newID = generateRandomGroupID();
+	isGroupIDUnique(newID, (unique) => {
+		if (unique) {
+			db.run(
+				"INSERT INTO Groups (groupid, group_name) VALUES (?, ?)",
+				[newID, groupName],
+				(err) => {
+					if (err) {
+						return res
+							.status(500)
+							.send("Error saving the group ID");
+					}
+					db.run(
+						"UPDATE UserGroups SET groupid = ? WHERE userid = ?",
+						[newID, userId],
+						(err) => {
+							if (err) {
+								return res
+									.status(500)
+									.send("Error saving the group ID");
+							}
+							res.send({
+								userid: userId,
+								group_name: groupName,
+								groupid: newID,
+							});
+						}
+					);
+				}
+			);
+		} else {
+			res.redirect("/generate-groupid");
+		}
+	});
 });
 
 /**
@@ -511,6 +541,75 @@ app.post("/storeMentionsInfo", (req, res) => {
 
 /**
  * @swagger
+ * /getUserName:
+ *   get:
+ *     summary: useridからusernameを取得する
+ *     description: Returns the name of the user based on the provided user ID from the UserNames table.
+ *     parameters:
+ *       - in: query
+ *         name: userid
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the user whose name is being retrieved.
+ *     responses:
+ *       200:
+ *         description: User name retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userid:
+ *                   type: string
+ *                   example: "user123"
+ *                 name:
+ *                   type: string
+ *                   example: "John Doe"
+ *       404:
+ *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User not found"
+ *       500:
+ *         description: Database error while retrieving user name.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Database error retrieving user name"
+ */
+app.get("/getUserName", (req, res) => {
+	const { userid } = req.query;
+
+	const getUserNameQuery = "SELECT name FROM UserNames WHERE userid = ?";
+
+	db.get(getUserNameQuery, [userid], (err, row) => {
+		if (err) {
+			console.error("Database error:", err);
+			return res
+				.status(500)
+				.json({ error: "Database error retrieving user name" });
+		}
+
+		if (!row) {
+			return res.status(404).json({ error: "User not found" });
+		}
+
+		res.json({ userid, name: row.name });
+	});
+});
+
+/**
+ * @swagger
  * /generateDummy/:
  *   post:
  *     summary: ユーザIDごとに20個のダミーデータを作成する。
@@ -543,19 +642,23 @@ app.post("/storeMentionsInfo", (req, res) => {
  *                       steps:
  *                         type: integer
  */
-app.post('/generateDummy', (req, res) => {
-    const userid = req.query.userid;
-    const dummyData = generateDummyData(userid);
+app.post("/generateDummy", (req, res) => {
+	const userid = req.query.userid;
+	const dummyData = generateDummyData(userid);
 
-    dummyData.forEach(data => {
-        db.run(`INSERT INTO Dummy (userid, num, steps) VALUES (?, ?, ?)`, [data.userid, data.num, data.steps], function(err) {
-            if (err) {
-                console.error(err.message);
-            }
-        });
-    });
+	dummyData.forEach((data) => {
+		db.run(
+			`INSERT INTO Dummy (userid, num, steps) VALUES (?, ?, ?)`,
+			[data.userid, data.num, data.steps],
+			function (err) {
+				if (err) {
+					console.error(err.message);
+				}
+			}
+		);
+	});
 
-    res.json({ message: 'Dummy data generated successfully', data: dummyData });
+	res.json({ message: "Dummy data generated successfully", data: dummyData });
 });
 
 app.listen(port, () => {
