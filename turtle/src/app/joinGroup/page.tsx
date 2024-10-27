@@ -1,67 +1,42 @@
+import * as React from 'react';
 
-import React from 'react';
-import { Box, Typography, IconButton, Stack } from '@mui/material';
-import Button from '@mui/material/Button';
-import turtleImage from './turtle.png';
-import SettingsIcon from '@mui/icons-material/Settings';
-import TextField from '@mui/material/TextField';
+import { Header2} from "@/components/header2";
+import { NextButton } from "@/components/nextButton";
+import { SettingButton } from '@/components/settingButton';
+import { TextButton } from '@/components/textButton';
+import { Header1 } from '@/components/header1';
 
-function App() {
-    return (
-        <Box
-            sx={{
-                width: '390px',
-                height: '844px',
-                margin: 'auto',
-                border: '1px solid #ddd',
-                overflow: 'auto',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                position: 'relative',
-            }}
-        >
-            {/* 設定ボタン */}
-            <IconButton aria-label="Settings" sx={{ position: 'absolute', top: 10, left: 10 }}>
-                <SettingsIcon sx={{ fontSize: 50 }} />
-            </IconButton>
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
+import NormalTurtle from '../../components/normalTurtle';
+import Setting from '../setting/page';
+import Head from 'next/head';
 
-            {/* 現在の状況 */}
-            <Typography variant="body1" sx={{ fontSize: 32, fontWeight: 'Bold', textAlign: 'center', mt: 12, width: '359px' }}>
-                お出かけ待機中
-            </Typography>
+export default function aloneHome() {
+  return (
 
+    <Container sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f9f4e8',
+      }}>
+        
+        <Stack spacing={5} >
 
-            {/* カメ表示 */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 5 }}>
-                <img src={turtleImage} alt="Turtle" style={{ width: '211px', height: '318px' }} />
-            </Box>
+          <Header1 text="お出かけ待機中"/>
 
+          <NormalTurtle/>
 
-            {/* グループID入力 */}
-            <Box
-                component="form"
-                sx={{
-                    '& > :not(style)': { m: 1, width: '262px' },
-                    my: 3,
-                }}
-                noValidate
-                autoComplete="off"
-            >
-                <TextField id="outlined-basic" label="グループID" variant="outlined" />
-            </Box>
-
-            {/* グループ参加ボタン */}
+        
             <Stack spacing={2} sx={{ '& button': { m: 1 } }}>
-                <Button variant="contained" size="large" sx={{ width: '262px', height: '55px' }}>
-                    グループに参加
-                </Button>
+                    <TextButton url="joinGroup" text = "グループに参加"/>
+                    <NextButton url="togetherHome"/>
             </Stack>
-
-        </Box>
-    );
+       
+            </Stack>
+            </Container>
+  );
 }
-
-export default App;

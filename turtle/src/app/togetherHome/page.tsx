@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { Header2} from "@/components/header2";
 import { NextButton } from "@/components/nextButton";
 import { SettingButton } from '@/components/settingButton';
 import { TextButton } from '@/components/textButton';
@@ -11,8 +10,6 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import NormalTurtle from '../../components/normalTurtle';
-import Setting from '../setting/page';
-import Head from 'next/head';
 
 export default function TogetherHome() {
 
@@ -45,7 +42,7 @@ export default function TogetherHome() {
           <Header2 text="6人"/>
 
           <NormalTurtle/>
-          <TextButton text = "休憩する" onClick={restFunction} />
+          {/* <TextButton text = "休憩する" onClick={restFunction} /> */}
 
 
         </Box>

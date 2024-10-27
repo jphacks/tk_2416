@@ -1,76 +1,42 @@
-import React from 'react';
-import { Box, Typography, IconButton, Stack } from '@mui/material';
-import Button from '@mui/material/Button';
-import turtleImage from './turtle.png';
-import SettingsIcon from '@mui/icons-material/Settings';
-import TextField from '@mui/material/TextField';
+import * as React from 'react';
 
-function App() {
-    return (
-        <Box
-            sx={{
-                width: '390px',
-                height: '844px',
-                margin: 'auto',
-                border: '1px solid #ddd',
-                overflow: 'auto',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                position: 'relative',
-            }}
-        >
-            {/* 設定ボタン */}
-            <IconButton aria-label="Settings" sx={{ position: 'absolute', top: 10, left: 10 }}>
-                <SettingsIcon sx={{ fontSize: 50 }} />
-            </IconButton>
+import { Header2} from "@/components/header2";
+import { NextButton } from "@/components/nextButton";
+import { SettingButton } from '@/components/settingButton';
+import { TextButton } from '@/components/textButton';
+import { Header1 } from '@/components/header1';
 
-            {/* 現在の状況 */}
-            <Typography variant="body1" sx={{ fontSize: 32, fontWeight: 'Bold', textAlign: 'center', mt: 12, width: '359px' }}>
-                お出かけ待機中
-            </Typography>
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
+import NormalTurtle from '../../components/normalTurtle';
+import Setting from '../setting/page';
+import Head from 'next/head';
 
+export default function aloneHome() {
+  return (
 
-            {/* カメ表示 */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 5 }}>
-                <img src={turtleImage} alt="Turtle" style={{ width: '211px', height: '318px' }} />
-            </Box>
+    <Container sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f9f4e8',
+      }}>
+        
+        <Stack spacing={5} >
 
+          <Header1 text="お出かけ待機中"/>
 
-            {/* グループ参加ボタン */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '100vh', // 画面の縦横中央
-                }}
-            >
-                <Stack spacing={2} alignItems="center" sx={{ '& button': { m: 1 } }}>
-                    {/* Typographyと最初のボタンを横並びにするためのStack */}
-                    <Stack direction="row" spacing={3} alignItems="center">
-                        <Typography
-                            variant="body1"
-                            sx={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center', width: '100px' }}
-                        >
-                            グループID
-                        </Typography>
-                        <Button variant="contained" size="large" sx={{ width: '158px', height: '48px' }}>
-                            グループに参加
-                        </Button>
-                    </Stack>
+          <NormalTurtle/>
 
-                    {/* 最後のボタンを中央揃えに配置 */}
-                    <Button variant="contained" size="large" sx={{ width: '262px', height: '55px' }}>
-                        グループを作る
-                    </Button>
-                </Stack>
-            </Box>
-
-        </Box>
-    );
+        
+            <Stack spacing={2} sx={{ '& button': { m: 1 } }}>
+                    <TextButton url="joinGroup" text = "グループに参加"/>
+                    <NextButton url="togetherHome"/>
+            </Stack>
+       
+            </Stack>
+            </Container>
+  );
 }
-
-export default App;
